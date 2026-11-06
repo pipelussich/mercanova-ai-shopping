@@ -5,7 +5,9 @@ import { ProductCard } from "@/components/product-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buttonVariants } from "@/components/ui/button";
 import { getDb } from "@/db/client";
+import { queryEmbedder } from "@/ai/embeddings";
 import { listBrands, listProducts, type ProductFilters } from "@/server/catalog/catalog-service";
+import { searchProducts } from "@/server/search/search-service";
 
 type SP = Record<string, string | string[] | undefined>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
@@ -47,9 +49,37 @@ async function Filters() {
   return <CatalogFilters brands={brands} />;
 }
 
+async function SearchResults({ f }: { f: ReturnType<typeof parseFilters> & { q: string } }) {
+  const { items, mode } = await searchProducts(
+    getDb(),
+    { ...f, query: f.q, limit: 20 },
+    { embedQuery: queryEmbedder() },
+  );
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-sm text-muted-foreground">
+        {items.length} resultados para «{f.q}»
+        {mode === "keyword" && " · búsqueda por palabras clave (la búsqueda inteligente no está disponible ahora)"}
+      </p>
+      {items.length === 0 ? (
+        <div className="rounded-lg border bg-background p-10 text-center text-muted-foreground">
+          No encontramos productos para esa búsqueda. Probá describirlo de otra forma o preguntale al asistente.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {items.map((p) => (
+            <ProductCard key={p.id} product={p} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 async function Results({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
   const f = parseFilters(sp);
+  if (f.q) return <SearchResults f={{ ...f, q: f.q }} />;
   const { items, total } = await listProducts(getDb(), f);
   const pages = Math.max(1, Math.ceil(total / 24));
 
