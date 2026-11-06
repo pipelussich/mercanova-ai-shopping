@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
+import { AssistantPanel } from "@/components/assistant/assistant-panel";
 import { CartButton } from "@/components/cart/cart-button";
 import { CartProvider } from "@/components/cart/cart-context";
 import { CompareProvider } from "@/components/compare-context";
@@ -28,6 +29,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <Suspense fallback={null}>
               <CompareTray />
             </Suspense>
+            <AssistantPanel />
             <footer className="border-t bg-background py-4 text-center text-xs text-muted-foreground">
               MercaNova · Prototipo académico · Compras simuladas: no se realiza ningún cobro.
             </footer>

@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  bigserial,
   boolean,
   check,
   customType,
@@ -243,6 +244,8 @@ export const chatMessages = pgTable(
     role: text("role").notNull(),
     parts: jsonb("parts").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    // Orden de inserción: varios mensajes de una misma transacción comparten created_at.
+    seq: bigserial("seq", { mode: "number" }).notNull(),
   },
   (t) => [index("chat_messages_session_idx").on(t.sessionId, t.createdAt)],
 );
