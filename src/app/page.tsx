@@ -1,69 +1,107 @@
-import Image from "next/image";
+import Link from "next/link";
+import { Suspense } from "react";
+import { CatalogFilters } from "@/components/catalog-filters";
+import { ProductCard } from "@/components/product-card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { buttonVariants } from "@/components/ui/button";
+import { getDb } from "@/db/client";
+import { listBrands, listProducts, type ProductFilters } from "@/server/catalog/catalog-service";
 
-export default function Home() {
+type SP = Record<string, string | string[] | undefined>;
+const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
+
+function parseFilters(sp: SP): ProductFilters & { page: number; q?: string } {
+  const max = Number(one(sp.max));
+  return {
+    q: one(sp.q)?.trim() || undefined,
+    category: one(sp.category) || undefined,
+    brand: one(sp.brand) || undefined,
+    maxPriceCents: Number.isFinite(max) && max > 0 ? Math.round(max * 100) : undefined,
+    inStockOnly: one(sp.stock) === "1",
+    includeInactive: one(sp.inactive) === "1",
+    page: Math.max(1, Number(one(sp.page)) || 1),
+  };
+}
+
+export default function CatalogPage({ searchParams }: PageProps<"/">) {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="flex flex-col gap-6">
+      <section className="flex flex-col gap-1">
+        <h1 className="text-2xl font-semibold tracking-tight">Catálogo</h1>
+        <p className="text-sm text-muted-foreground">
+          Buscá con tus palabras o abrí el asistente para que te recomiende qué comprar.
+        </p>
+      </section>
+      <Suspense fallback={<Skeleton className="h-24 w-full" />}>
+        <Filters />
+      </Suspense>
+      <Suspense fallback={<GridSkeleton />}>
+        <Results searchParams={searchParams} />
+      </Suspense>
+    </div>
+  );
+}
+
+async function Filters() {
+  const brands = await listBrands(getDb());
+  return <CatalogFilters brands={brands} />;
+}
+
+async function Results({ searchParams }: { searchParams: Promise<SP> }) {
+  const sp = await searchParams;
+  const f = parseFilters(sp);
+  const { items, total } = await listProducts(getDb(), f);
+  const pages = Math.max(1, Math.ceil(total / 24));
+
+  if (items.length === 0)
+    return (
+      <div className="rounded-lg border bg-background p-10 text-center text-muted-foreground">
+        No encontramos productos con esos filtros. Probá sacando alguno.
+      </div>
+    );
+
+  const pageHref = (p: number) => {
+    const next = new URLSearchParams();
+    for (const [k, v] of Object.entries(sp)) if (typeof v === "string") next.set(k, v);
+    next.set("page", String(p));
+    return `/?${next.toString()}`;
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-sm text-muted-foreground">{total} productos</p>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {items.map((p) => (
+          <ProductCard key={p.id} product={p} />
+        ))}
+      </div>
+      {pages > 1 && (
+        <nav className="flex items-center justify-center gap-2" aria-label="Paginación">
+          {f.page > 1 && (
+            <Link href={pageHref(f.page - 1)} className={buttonVariants({ variant: "outline", size: "sm" })}>
+              Anterior
+            </Link>
+          )}
+          <span className="text-sm text-muted-foreground">
+            Página {f.page} de {pages}
+          </span>
+          {f.page < pages && (
+            <Link href={pageHref(f.page + 1)} className={buttonVariants({ variant: "outline", size: "sm" })}>
+              Siguiente
+            </Link>
+          )}
+        </nav>
+      )}
+    </div>
+  );
+}
+
+function GridSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {Array.from({ length: 8 }, (_, i) => (
+        <Skeleton key={i} className="h-80" />
+      ))}
     </div>
   );
 }
