@@ -17,7 +17,9 @@ describe("schema", () => {
   });
 
   it("no permite dos órdenes con la misma idempotency_key", async () => {
-    await db.execute(sql`insert into sessions (id) values ('00000000-0000-4000-8000-000000000001') on conflict do nothing`);
+    await db.execute(
+      sql`insert into sessions (id) values ('00000000-0000-4000-8000-000000000001') on conflict do nothing`,
+    );
     const insert = (id: string) =>
       db.execute(sql`
         insert into orders (id, session_id, idempotency_key, customer_name, email, phone, delivery_method, total_cents)

@@ -63,6 +63,31 @@ describe("searchProducts (semántica)", () => {
     expect(r.items.every((p) => p.active)).toBe(true);
   });
 
+  it("ordena por precio cuando se pide el más barato", async () => {
+    const r = await searchProducts(
+      db,
+      { query: "mouse", category: "Mice", inStockOnly: true, sortBy: "price_asc", limit: 5 },
+      { embedQuery: fakeEmbed },
+    );
+    const prices = r.items.map((p) => p.priceCents);
+    expect(prices).toEqual([...prices].sort((a, b) => a - b));
+    const [{ min }] = await db.execute<{ min: string }>(sql`
+      select min(pr.current_price) as min from products p join prices pr on pr.product_id = p.id
+      where p.category = 'Mice' and p.active
+        and (select sum(available_qty) from inventory i where i.product_id = p.id) > 0`);
+    expect(r.items[0].priceCents).toBe(Math.round(Number(min) * 100));
+  });
+
+  it("ordena por rating", async () => {
+    const r = await searchProducts(
+      db,
+      { query: "x", category: "Tablets", sortBy: "rating", limit: 5 },
+      { embedQuery: fakeEmbed },
+    );
+    const ratings = r.items.map((p) => p.rating ?? 0);
+    expect(ratings).toEqual([...ratings].sort((a, b) => b - a));
+  });
+
   it("explica coincidencias con los usos recomendados", async () => {
     const r = await searchProducts(db, { query: "headphones for calls and music" }, { embedQuery: fakeEmbed });
     expect(Array.isArray(r.items[0].matchReasons)).toBe(true);

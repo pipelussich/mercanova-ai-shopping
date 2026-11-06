@@ -52,6 +52,18 @@ describe("tools del asistente", () => {
     expect(r.results[0]).toHaveProperty("recommendedFor");
   });
 
+  it("search_products puede ordenar por precio para encontrar el más barato", async () => {
+    const r = await run("search_products", {
+      query: "mouse",
+      category: "Mice",
+      inStockOnly: true,
+      sortBy: "price_asc",
+    });
+    const prices = r.results.map((p: { priceUsd: number }) => p.priceUsd);
+    expect(prices).toEqual([...prices].sort((a: number, b: number) => a - b));
+    expect(r.sortBy).toBe("price_asc");
+  });
+
   it("search_products avisa cuando no hay resultados", async () => {
     const r = await run("search_products", { query: "zzzqqq" });
     expect(r).toMatchObject({ results: [], note: "NO_RESULTS" });

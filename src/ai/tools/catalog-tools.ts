@@ -55,6 +55,12 @@ export function catalogTools(ctx: ToolContext) {
         minPriceUsd: z.number().nonnegative().optional(),
         brand: z.string().optional(),
         inStockOnly: z.boolean().optional().describe("Only products with stock > 0"),
+        sortBy: z
+          .enum(["relevance", "price_asc", "price_desc", "rating"])
+          .optional()
+          .describe(
+            "Default relevance. Use price_asc for 'the cheapest', price_desc for 'the most expensive', rating for 'the best rated'",
+          ),
       }),
       execute: async (input) => {
         const { items, mode } = await searchProducts(
@@ -66,6 +72,7 @@ export function catalogTools(ctx: ToolContext) {
             maxPriceCents: input.maxPriceUsd != null ? Math.round(input.maxPriceUsd * 100) : undefined,
             minPriceCents: input.minPriceUsd != null ? Math.round(input.minPriceUsd * 100) : undefined,
             inStockOnly: input.inStockOnly,
+            sortBy: input.sortBy,
             limit: 6,
           },
           { embedQuery: ctx.embedQuery },
@@ -84,9 +91,10 @@ export function catalogTools(ctx: ToolContext) {
           keyFeatures: p.keyFeatures,
           matchReasons: p.matchReasons,
         }));
+        const sortBy = input.sortBy ?? "relevance";
         return results.length
-          ? { results, searchMode: mode }
-          : { results, searchMode: mode, note: "NO_RESULTS" as const };
+          ? { results, searchMode: mode, sortBy }
+          : { results, searchMode: mode, sortBy, note: "NO_RESULTS" as const };
       },
     }),
 

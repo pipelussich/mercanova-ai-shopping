@@ -131,7 +131,9 @@ describe("placeOrder", () => {
 
   it("rechaza retiro en un depósito sin stock suficiente sin cambiar nada", async () => {
     await addToCart(db, session, P, 5);
-    await expect(checkout(session, { deliveryMethod: "pickup", pickupWarehouseId: "WH-MAL-001" })).rejects.toMatchObject({
+    await expect(
+      checkout(session, { deliveryMethod: "pickup", pickupWarehouseId: "WH-MAL-001" }),
+    ).rejects.toMatchObject({
       code: "PICKUP_UNAVAILABLE",
     });
     expect(await availability(db, P)).toBe(35);
