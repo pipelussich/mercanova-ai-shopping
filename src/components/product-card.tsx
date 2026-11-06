@@ -4,6 +4,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { categoryLabel } from "@/domain/categories";
 import type { ProductSummary } from "@/server/catalog/catalog-service";
 import { AvailabilityBadge } from "./availability-badge";
+import { AddToCartButton } from "./cart/add-to-cart-button";
 import { CompareToggle } from "./compare-toggle";
 import { Price } from "./price";
 
@@ -45,6 +46,12 @@ export function ProductCard({ product, actions }: { product: ProductSummary; act
         </div>
       </CardContent>
       <CardFooter className="flex flex-wrap gap-2">
+        <AddToCartButton
+          productId={product.id}
+          productName={product.name}
+          active={product.active}
+          availableQty={product.availableQty}
+        />
         {actions}
         <CompareToggle id={product.id} name={product.name} />
       </CardFooter>

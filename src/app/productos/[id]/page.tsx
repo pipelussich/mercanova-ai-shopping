@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ChevronLeft, ShieldCheck, Star, Undo2 } from "lucide-react";
 import { AvailabilityBadge } from "@/components/availability-badge";
+import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { CompareToggle } from "@/components/compare-toggle";
 import { Price } from "@/components/price";
 import { ProductCard } from "@/components/product-card";
@@ -58,6 +59,7 @@ function ProductDetailView({ product: p }: { product: ProductDetail }) {
             <AvailabilityBadge status={p.stockStatus} availableQty={p.availableQty} active={p.active} />
           </div>
           <div className="flex flex-wrap gap-2" data-slot="product-actions">
+            <AddToCartButton productId={p.id} productName={p.name} active={p.active} availableQty={p.availableQty} size="lg" />
             <CompareToggle id={p.id} name={p.name} size="default" />
           </div>
           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">

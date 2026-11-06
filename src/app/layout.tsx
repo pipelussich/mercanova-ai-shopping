@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
+import { CartButton } from "@/components/cart/cart-button";
+import { CartProvider } from "@/components/cart/cart-context";
 import { CompareProvider } from "@/components/compare-context";
 import { CompareTray } from "@/components/compare-tray";
 import { SiteHeader } from "@/components/site-header";
@@ -19,16 +21,18 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="es" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-muted/30">
-        <CompareProvider>
-          <SiteHeader />
-          <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6">{children}</main>
-          <Suspense fallback={null}>
-            <CompareTray />
-          </Suspense>
-          <footer className="border-t bg-background py-4 text-center text-xs text-muted-foreground">
-            MercaNova · Prototipo académico · Compras simuladas: no se realiza ningún cobro.
-          </footer>
-        </CompareProvider>
+        <CartProvider>
+          <CompareProvider>
+            <SiteHeader cartSlot={<CartButton />} />
+            <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6">{children}</main>
+            <Suspense fallback={null}>
+              <CompareTray />
+            </Suspense>
+            <footer className="border-t bg-background py-4 text-center text-xs text-muted-foreground">
+              MercaNova · Prototipo académico · Compras simuladas: no se realiza ningún cobro.
+            </footer>
+          </CompareProvider>
+        </CartProvider>
         <Toaster richColors position="top-center" />
       </body>
     </html>
