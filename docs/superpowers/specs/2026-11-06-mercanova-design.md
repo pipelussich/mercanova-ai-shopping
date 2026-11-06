@@ -59,10 +59,12 @@ El xlsx se versiona en `data/` (repo privado) y se importa con un script de seed
 - **Vercel AI SDK** con provider `@ai-sdk/google`: tool calling multi-paso, streaming al frontend y renderizado de resultados de tools como componentes.
 - UI: Tailwind + shadcn/ui. Tests: Vitest + Playwright.
 
-### 5.2 LLM — Gemini free tier
-- Modelo de chat configurable por env (`GEMINI_CHAT_MODEL`), default: el Flash 3.x gratuito vigente al implementar (verificar con la key real). Fallback configurable a un Flash-Lite ante 429.
-- Embeddings: `gemini-embedding-001` (gratuito, multilingüe: consulta en español ↔ productos en inglés).
-- Voz: el mismo modelo Gemini transcribe audio (input multimodal) → gratis, funciona en cualquier browser.
+### 5.2 LLM — Gemini free tier (verificado con la key real el 2026-11-06)
+- Para keys nuevas, `generateContent` responde 404 de forma inconsistente y los modelos 2.5 ya no están disponibles. Se usa la **Interactions API** (`POST /v1beta/interactions`), recomendada por Google desde jun-2026, vía `google.interactions(model)` de `@ai-sdk/google` 4.x.
+- Chat: `GEMINI_CHAT_MODEL` (default `gemini-3.5-flash-lite`) con fallback `GEMINI_FALLBACK_MODEL` (default `gemini-3.1-flash-lite`). Ambos probados con tools. `gemini-3.8-flash` dio timeouts/503 en las pruebas → configurable, no default.
+- Embeddings: `gemini-embedding-001`, 768 dimensiones (gratuito, multilingüe: consulta en español ↔ productos en inglés).
+- Voz: `gemini-3.5-transcribe` vía `google.transcription(...)`; fallback: audio como input de la Interactions API con instrucción de transcribir.
+- Historial: la app manda el historial completo en cada turno (`store: false`); el estado de la conversación vive en nuestra DB, no en Google.
 
 ### 5.3 Búsqueda (RF-02) — híbrida
 - Cada producto activo tiene un "documento de búsqueda" (nombre, marca, categoría, descripción, recommended_for, key_features, tags, specs clave) y su embedding en pgvector.
