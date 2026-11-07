@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Star } from "lucide-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { categoryLabel } from "@/domain/categories";
+import { productImageUrl } from "@/domain/product-images";
 import type { ProductSummary } from "@/server/catalog/catalog-service";
 import { AvailabilityBadge } from "./availability-badge";
 import { AddToCartButton } from "./cart/add-to-cart-button";
@@ -14,7 +15,7 @@ export function ProductCard({ product, actions }: { product: ProductSummary; act
       <Link href={`/productos/${product.id}`} className="block bg-muted">
         {/* eslint-disable-next-line @next/next/no-img-element -- imágenes placeholder externas del dataset */}
         <img
-          src={product.imageUrl ?? ""}
+          src={productImageUrl(product)}
           alt={product.name}
           loading="lazy"
           className="aspect-[4/3] w-full object-cover"

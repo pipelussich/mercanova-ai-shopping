@@ -9,6 +9,7 @@ import { ComparisonTable } from "@/components/comparison-table";
 import { CompareToggle } from "@/components/compare-toggle";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { formatUSD, toCents } from "@/domain/money";
+import { productImageUrl } from "@/domain/product-images";
 import { stockLabelEs, type StockStatus } from "@/domain/stock";
 import { TOOL_STATUS_ES } from "./types";
 
@@ -16,6 +17,7 @@ type MiniProduct = {
   id: string;
   name: string;
   brand?: string;
+  category?: string;
   priceUsd: number;
   availableQty: number;
   stockStatus: StockStatus;
@@ -26,35 +28,45 @@ type MiniProduct = {
 
 function MiniProductCard({ p }: { p: MiniProduct }) {
   return (
-    <div className="flex flex-col gap-1.5 rounded-lg border bg-background p-3 text-sm">
-      <div className="flex items-start justify-between gap-2">
-        <Link href={`/productos/${p.id}`} className="font-medium leading-snug hover:underline">
-          {p.name}
-        </Link>
-        <span className="shrink-0 font-semibold tabular-nums">{formatUSD(toCents(p.priceUsd))}</span>
-      </div>
-      <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-        {p.brand && <span>{p.brand}</span>}
-        {p.rating != null && <span>★ {p.rating.toFixed(1)}</span>}
-        <span className={p.availableQty > 0 ? "text-emerald-700" : "text-destructive"}>
-          {p.active === false ? "Discontinuado" : `${stockLabelEs(p.stockStatus)} (${p.availableQty} u.)`}
-        </span>
-      </div>
-      {p.matchReasons && p.matchReasons.length > 0 && (
-        <p className="text-xs text-muted-foreground">Coincide con: {p.matchReasons.join(", ")}</p>
-      )}
-      <div className="flex flex-wrap gap-1.5 pt-1">
-        <AddToCartButton
-          productId={p.id}
-          productName={p.name}
-          active={p.active !== false}
-          availableQty={p.availableQty}
-          size="sm"
+    <div className="flex gap-3 rounded-lg border bg-background p-3 text-sm">
+      {p.category && (
+        // eslint-disable-next-line @next/next/no-img-element -- foto genérica de la categoría
+        <img
+          src={productImageUrl({ id: p.id, category: p.category, imageUrl: null })}
+          alt=""
+          className="size-16 shrink-0 rounded-md border object-cover"
         />
-        <CompareToggle id={p.id} name={p.name} />
-        <Link href={`/productos/${p.id}`} className={buttonVariants({ variant: "ghost", size: "sm" })}>
-          <ExternalLink /> Ver
-        </Link>
+      )}
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <div className="flex items-start justify-between gap-2">
+          <Link href={`/productos/${p.id}`} className="font-medium leading-snug hover:underline">
+            {p.name}
+          </Link>
+          <span className="shrink-0 font-semibold tabular-nums">{formatUSD(toCents(p.priceUsd))}</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+          {p.brand && <span>{p.brand}</span>}
+          {p.rating != null && <span>★ {p.rating.toFixed(1)}</span>}
+          <span className={p.availableQty > 0 ? "text-emerald-700" : "text-destructive"}>
+            {p.active === false ? "Discontinuado" : `${stockLabelEs(p.stockStatus)} (${p.availableQty} u.)`}
+          </span>
+        </div>
+        {p.matchReasons && p.matchReasons.length > 0 && (
+          <p className="text-xs text-muted-foreground">Coincide con: {p.matchReasons.join(", ")}</p>
+        )}
+        <div className="flex flex-wrap gap-1.5 pt-1">
+          <AddToCartButton
+            productId={p.id}
+            productName={p.name}
+            active={p.active !== false}
+            availableQty={p.availableQty}
+            size="sm"
+          />
+          <CompareToggle id={p.id} name={p.name} />
+          <Link href={`/productos/${p.id}`} className={buttonVariants({ variant: "ghost", size: "sm" })}>
+            <ExternalLink /> Ver
+          </Link>
+        </div>
       </div>
     </div>
   );

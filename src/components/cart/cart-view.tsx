@@ -6,6 +6,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatUSD } from "@/domain/money";
+import { productImageUrl } from "@/domain/product-images";
 import { useCart } from "./cart-context";
 
 export function CartView() {
@@ -31,7 +32,7 @@ export function CartView() {
           <Card key={l.product.id}>
             <CardContent className="flex flex-wrap items-center gap-4">
               {/* eslint-disable-next-line @next/next/no-img-element -- placeholder externo */}
-              <img src={l.product.imageUrl ?? ""} alt="" className="size-20 rounded-md border object-cover" />
+              <img src={productImageUrl(l.product)} alt="" className="size-20 rounded-md border object-cover" />
               <div className="flex min-w-48 flex-1 flex-col gap-1">
                 <Link href={`/productos/${l.product.id}`} className="font-medium hover:underline">
                   {l.product.name}

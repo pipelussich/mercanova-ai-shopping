@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requestDb } from "@/server/request-db";
 import { categoryLabel, RELATION_LABELS_ES } from "@/domain/categories";
+import { productImageUrl } from "@/domain/product-images";
 import { stockLabelEs, stockStatus } from "@/domain/stock";
 import { getProduct, type ProductDetail } from "@/server/catalog/catalog-service";
 
@@ -41,7 +42,7 @@ function ProductDetailView({ product: p }: { product: ProductDetail }) {
 
       <div className="grid gap-8 lg:grid-cols-2">
         {/* eslint-disable-next-line @next/next/no-img-element -- imagen placeholder externa */}
-        <img src={p.imageUrl ?? ""} alt={p.name} className="w-full rounded-xl border bg-muted object-cover" />
+        <img src={productImageUrl(p)} alt={p.name} className="w-full rounded-xl border bg-muted object-cover" />
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
             <span>{categoryLabel(p.category)}</span>·<span>{p.subcategory}</span>·<span>{p.brand}</span>
