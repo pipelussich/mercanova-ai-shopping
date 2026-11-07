@@ -16,7 +16,7 @@ export function RichText({ text }: { text: string }) {
         const link = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(p);
         if (link) {
           const [, label, href] = link;
-          return href.startsWith("/") ? (
+          return /^\/(?![\/\\])/.test(href) ? (
             <Link key={i} href={href} className="font-medium underline">
               {label}
             </Link>

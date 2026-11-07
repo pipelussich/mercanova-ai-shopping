@@ -7,7 +7,10 @@ export type CartLineIssue = "INSUFFICIENT_STOCK" | "INACTIVE";
 /** Valida la cantidad total que quedaría en el carrito para un producto. */
 export function validateQuantity(requested: number, available: number, active: boolean): void {
   if (!Number.isInteger(requested) || requested < 1 || requested > MAX_QTY_PER_LINE)
-    throw new DomainError("INVALID_QUANTITY", `La cantidad tiene que ser un número entero entre 1 y ${MAX_QTY_PER_LINE}.`);
+    throw new DomainError(
+      "INVALID_QUANTITY",
+      `La cantidad tiene que ser un número entero entre 1 y ${MAX_QTY_PER_LINE}.`,
+    );
   if (!active) throw new DomainError("PRODUCT_INACTIVE");
   if (requested > available)
     throw new DomainError(

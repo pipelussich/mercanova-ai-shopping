@@ -111,6 +111,30 @@ describe("agente", () => {
     expect(chunks.some((c) => c.type === "error")).toBe(false);
   });
 
+  it("si el modelo principal no responde, corta por timeout y usa el de respaldo", async () => {
+    const hanging = new MockLanguageModelV4({
+      doStream: ({ abortSignal }) =>
+        new Promise((_, reject) => abortSignal?.addEventListener("abort", () => reject(abortSignal.reason))),
+    });
+    const backup = new MockLanguageModelV4({ doStream: [textStream("Respuesta del respaldo")] });
+    const t0 = Date.now();
+    const session = randomUUID();
+    const chunks = (await convertReadableStreamToArray(
+      createAgentStream({
+        db,
+        sessionId: session,
+        messages: [userMessage("Hola")],
+        embedQuery: failingEmbed,
+        models: [hanging, backup],
+        maxRetries: 0,
+        retryDelayMs: 0,
+        firstContentTimeoutMs: 200,
+      }),
+    )) as UIMessageChunk[];
+    expect(Date.now() - t0).toBeLessThan(5_000);
+    expect(chunks.some((c) => c.type === "text-delta" && c.delta === "Respuesta del respaldo")).toBe(true);
+  });
+
   it("si todos los modelos fallan, emite un error claro en español", async () => {
     const down = new MockLanguageModelV4({
       doStream: async () => {
@@ -130,6 +154,15 @@ describe("agente", () => {
 });
 
 describe("historial del chat", () => {
+  it("una sesión no puede sobrescribir mensajes de otra reutilizando el id", async () => {
+    const victim = randomUUID();
+    const attacker = randomUUID();
+    const original: UIMessage = { id: randomUUID(), role: "user", parts: [{ type: "text", text: "mensaje original" }] };
+    await saveMessages(db, victim, [original]);
+    await saveMessages(db, attacker, [{ ...original, parts: [{ type: "text", text: "pisado" }] }]);
+    expect(await loadMessages(db, victim)).toEqual([original]);
+  });
+
   it("guarda y recupera la conversación de la sesión", async () => {
     const session = randomUUID();
     const msgs: UIMessage[] = [

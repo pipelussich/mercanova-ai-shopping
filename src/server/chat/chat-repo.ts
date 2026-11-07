@@ -23,7 +23,8 @@ export async function saveMessages(db: DB, sessionId: string, messages: UIMessag
       await tx.execute(sql`
         insert into chat_messages (id, session_id, role, parts)
         values (${m.id}, ${sessionId}, ${m.role}, ${JSON.stringify(m.parts)}::jsonb)
-        on conflict (id) do update set parts = excluded.parts`);
+        on conflict (id) do update set parts = excluded.parts
+        where chat_messages.session_id = excluded.session_id`); // nunca pisar mensajes de otra sesión
   });
 }
 

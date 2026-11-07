@@ -165,10 +165,13 @@ export async function importDataset(db: DB, xlsxPath: string): Promise<ImportSum
   const inv = inventoryRows(sheets);
 
   await db.transaction(async (tx) => {
-    await tx.insert(brands).values(brandRows).onConflictDoUpdate({
-      target: brands.id,
-      set: { name: sql`excluded.name`, country: sql`excluded.country`, positioning: sql`excluded.positioning` },
-    });
+    await tx
+      .insert(brands)
+      .values(brandRows)
+      .onConflictDoUpdate({
+        target: brands.id,
+        set: { name: sql`excluded.name`, country: sql`excluded.country`, positioning: sql`excluded.positioning` },
+      });
     await tx.insert(categories).values(categoryRows).onConflictDoNothing();
     await chunked(productRows, 100, (c) =>
       tx

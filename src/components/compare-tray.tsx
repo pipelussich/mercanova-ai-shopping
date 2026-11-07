@@ -16,7 +16,10 @@ export function CompareTray() {
       <GitCompareArrows className="size-4 text-muted-foreground" />
       <div className="flex max-w-[50vw] gap-1 overflow-x-auto">
         {items.map((i) => (
-          <span key={i.id} className="flex items-center gap-1 whitespace-nowrap rounded-full bg-muted px-2 py-0.5 text-xs">
+          <span
+            key={i.id}
+            className="flex items-center gap-1 whitespace-nowrap rounded-full bg-muted px-2 py-0.5 text-xs"
+          >
             {i.name}
             <button aria-label={`Quitar ${i.name}`} onClick={() => toggle(i)}>
               <X className="size-3" />

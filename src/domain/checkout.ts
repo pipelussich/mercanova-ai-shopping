@@ -22,7 +22,11 @@ export const checkoutSchema = z
   .superRefine((v, ctx) => {
     if (v.deliveryMethod === "shipping") {
       if (!v.address || v.address.length < 5 || v.address.length > 200)
-        ctx.addIssue({ code: "custom", path: ["address"], message: "Ingresá una dirección de envío (5 a 200 caracteres)." });
+        ctx.addIssue({
+          code: "custom",
+          path: ["address"],
+          message: "Ingresá una dirección de envío (5 a 200 caracteres).",
+        });
       if (!v.department || !(URUGUAY_DEPARTMENTS as readonly string[]).includes(v.department))
         ctx.addIssue({ code: "custom", path: ["department"], message: "Elegí un departamento de Uruguay." });
     } else if (!v.pickupWarehouseId) {

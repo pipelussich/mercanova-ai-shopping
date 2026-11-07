@@ -9,7 +9,11 @@ export function CartButton() {
   const { cart } = useCart();
   const count = cart?.itemCount ?? 0;
   return (
-    <Link href="/carrito" className={buttonVariants({ variant: "outline" })} aria-label={`Carrito (${count} productos)`}>
+    <Link
+      href="/carrito"
+      className={buttonVariants({ variant: "outline" })}
+      aria-label={`Carrito (${count} productos)`}
+    >
       <ShoppingCart /> Carrito
       {count > 0 && (
         <span className="rounded-full bg-primary px-1.5 text-xs text-primary-foreground tabular-nums">{count}</span>

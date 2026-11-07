@@ -139,8 +139,7 @@ export async function compareProducts(db: DB, ids: string[]): Promise<Comparison
     throw new DomainError("INVALID_QUANTITY", "Podés comparar entre 2 y 4 productos.");
   const products = await Promise.all(unique.map((id) => getProduct(db, id)));
   const missing = unique.filter((_, i) => !products[i]);
-  if (missing.length)
-    throw new DomainError("PRODUCT_NOT_FOUND", `No encontramos: ${missing.join(", ")}.`, { missing });
+  if (missing.length) throw new DomainError("PRODUCT_NOT_FOUND", `No encontramos: ${missing.join(", ")}.`, { missing });
   const found = products as ProductDetail[];
 
   const keys: { group: string; name: string }[] = [];

@@ -107,10 +107,7 @@ export function CatalogFilters({ brands, showSearch = true }: { brands: string[]
           />
         </form>
         <label className="flex h-8 items-center gap-2">
-          <Checkbox
-            checked={params.get("stock") === "1"}
-            onCheckedChange={(v) => update({ stock: v ? "1" : null })}
-          />
+          <Checkbox checked={params.get("stock") === "1"} onCheckedChange={(v) => update({ stock: v ? "1" : null })} />
           Sólo con stock
         </label>
         <label className="flex h-8 items-center gap-2">

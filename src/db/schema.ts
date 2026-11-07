@@ -53,10 +53,22 @@ export const products = pgTable(
     subcategory: text("subcategory").notNull(),
     shortDescription: text("short_description").notNull(),
     description: text("description").notNull(),
-    recommendedFor: text("recommended_for").array().notNull().default(sql`'{}'`),
-    notRecommendedFor: text("not_recommended_for").array().notNull().default(sql`'{}'`),
-    keyFeatures: text("key_features").array().notNull().default(sql`'{}'`),
-    tags: text("tags").array().notNull().default(sql`'{}'`),
+    recommendedFor: text("recommended_for")
+      .array()
+      .notNull()
+      .default(sql`'{}'`),
+    notRecommendedFor: text("not_recommended_for")
+      .array()
+      .notNull()
+      .default(sql`'{}'`),
+    keyFeatures: text("key_features")
+      .array()
+      .notNull()
+      .default(sql`'{}'`),
+    tags: text("tags")
+      .array()
+      .notNull()
+      .default(sql`'{}'`),
     color: text("color"),
     weightKg: numeric("weight_kg", { mode: "number" }),
     widthCm: numeric("width_cm", { mode: "number" }),
@@ -73,10 +85,7 @@ export const products = pgTable(
       sql`to_tsvector('english', coalesce(name,'') || ' ' || coalesce(brand_name,'') || ' ' || coalesce(category,'') || ' ' || coalesce(subcategory,'') || ' ' || coalesce(description,''))`,
     ),
   },
-  (t) => [
-    index("products_category_idx").on(t.category),
-    index("products_search_tsv_idx").using("gin", t.searchTsv),
-  ],
+  (t) => [index("products_category_idx").on(t.category), index("products_search_tsv_idx").using("gin", t.searchTsv)],
 );
 
 export const productSpecs = pgTable(

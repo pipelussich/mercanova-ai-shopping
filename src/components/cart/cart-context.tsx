@@ -56,17 +56,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("mn:cart-changed", onChange);
   }, [refresh]);
 
-  const mutate = useCallback(async (url: string, init: RequestInit) => {
-    try {
-      const r = await apiFetch<CartMutation>(url, init);
-      setCart(r.cart);
-      return r;
-    } catch (e) {
-      toast.error((e as Error).message);
-      await refresh();
-      return null;
-    }
-  }, [refresh]);
+  const mutate = useCallback(
+    async (url: string, init: RequestInit) => {
+      try {
+        const r = await apiFetch<CartMutation>(url, init);
+        setCart(r.cart);
+        return r;
+      } catch (e) {
+        toast.error((e as Error).message);
+        await refresh();
+        return null;
+      }
+    },
+    [refresh],
+  );
 
   const value = useMemo<CartCtx>(
     () => ({

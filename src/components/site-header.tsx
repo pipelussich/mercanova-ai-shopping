@@ -6,7 +6,9 @@ export function SiteHeader({ cartSlot }: { cartSlot?: React.ReactNode }) {
     <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-6 px-4">
         <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-          <span className="grid size-7 place-items-center rounded-md bg-primary text-primary-foreground text-sm">M</span>
+          <span className="grid size-7 place-items-center rounded-md bg-primary text-primary-foreground text-sm">
+            M
+          </span>
           MercaNova
         </Link>
         <nav className="flex items-center gap-4 text-sm text-muted-foreground">
