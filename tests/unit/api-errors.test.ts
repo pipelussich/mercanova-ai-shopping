@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { handleRoute, readJson } from "@/app/api/_lib/respond";
@@ -38,6 +39,17 @@ describe("handleRoute", () => {
     });
     expect(res.status).toBe(422);
     expect((await body(res)).error.message).toBe("La cantidad tiene que ser un número.");
+  });
+
+  it("deja pasar los errores internos de Next (p.ej. notFound o la detección de rutas dinámicas en el build)", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    await expect(
+      handleRoute(async () => {
+        notFound();
+      }),
+    ).rejects.toThrow();
+    expect(log).not.toHaveBeenCalled();
+    log.mockRestore();
   });
 
   it("error inesperado → 500 genérico, sin stack ni detalles internos", async () => {

@@ -65,9 +65,12 @@ export function CartView() {
                   defaultValue={l.quantity}
                   aria-label="Cantidad"
                   className="h-7 w-14 rounded-md border bg-background text-center tabular-nums"
-                  onBlur={(e) => {
-                    const q = Number(e.target.value);
-                    if (q !== l.quantity) void setQuantity(l.product.id, q);
+                  onBlur={async (e) => {
+                    const input = e.currentTarget;
+                    const q = Number(input.value);
+                    if (q === l.quantity) return;
+                    // Si la cantidad no es válida (p.ej. supera el stock) se muestra el error y se vuelve a la real.
+                    if (!(await setQuantity(l.product.id, q))) input.value = String(l.quantity);
                   }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") (e.target as HTMLInputElement).blur();
@@ -83,7 +86,12 @@ export function CartView() {
                 </Button>
               </div>
               <span className="w-28 text-right font-medium tabular-nums">{formatUSD(l.lineTotalCents)}</span>
-              <Button size="icon-sm" variant="ghost" aria-label={`Quitar ${l.product.name}`} onClick={() => remove(l.product.id)}>
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                aria-label={`Quitar ${l.product.name}`}
+                onClick={() => remove(l.product.id)}
+              >
                 <Trash2 />
               </Button>
             </CardContent>
@@ -112,7 +120,10 @@ export function CartView() {
           <Link
             href="/checkout"
             aria-disabled={cart.hasIssues}
-            className={buttonVariants({ size: "lg", className: cart.hasIssues ? "pointer-events-none opacity-50" : "" })}
+            className={buttonVariants({
+              size: "lg",
+              className: cart.hasIssues ? "pointer-events-none opacity-50" : "",
+            })}
           >
             Ir al checkout
           </Link>

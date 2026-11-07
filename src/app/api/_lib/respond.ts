@@ -1,3 +1,4 @@
+import { unstable_rethrow } from "next/navigation";
 import { ZodError } from "zod";
 import { isDomainError, type DomainErrorCode } from "@/domain/errors";
 
@@ -35,6 +36,8 @@ export async function handleRoute(fn: () => Promise<Response>): Promise<Response
   try {
     return await fn();
   } catch (err) {
+    // Errores internos de Next (notFound, detección de rutas dinámicas durante el build): no son nuestros.
+    unstable_rethrow(err);
     if (isDomainError(err)) return errorResponse(STATUS[err.code], err.code, err.message, err.details);
     if (err instanceof ZodError)
       return errorResponse(422, "VALIDATION_ERROR", err.issues[0]?.message ?? "Datos inválidos.", {
