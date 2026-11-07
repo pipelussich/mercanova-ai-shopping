@@ -1,0 +1,124 @@
+(node:42205) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:42227) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.1.0 /Users/pipelussich/mercanova-ai-shopping/.claude/worktrees/main
+
+(node:42232) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |integration| tests/integration/orders.test.ts > placeOrder > registra la orden, descuenta stock por depósito y vacía el carrito 535ms
+ ✓ |integration| tests/integration/orders.test.ts > placeOrder > recalcula el estado del depósito 307ms
+ ✓ |integration| tests/integration/orders.test.ts > placeOrder > es idempotente ante reintentos con la misma clave 318ms
+ ✓ |integration| tests/integration/orders.test.ts > placeOrder > doble click: dos confirmaciones simultáneas con la misma clave devuelven la misma orden 298ms
+ ✓ |integration| tests/integration/orders.test.ts > placeOrder > no vende dos veces la última unidad ante compras concurrentes 305ms
+ ✓ |integration| tests/integration/orders.test.ts > placeOrder > rechaza si el precio cambió desde la revisión y no escribe nada 283ms
+ ✓ |integration| tests/integration/orders.test.ts > placeOrder > rechaza un carrito vacío 274ms
+ ✓ |integration| tests/integration/orders.test.ts > placeOrder > rechaza retiro en un depósito sin stock suficiente sin cambiar nada 282ms
+ ✓ |integration| tests/integration/orders.test.ts > placeOrder > valida los datos del checkout 279ms
+ ✓ |integration| tests/integration/orders.test.ts > historial > sólo devuelve órdenes de la propia sesión, de la más nueva a la más vieja 329ms
+(node:42247) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |integration| tests/integration/tools.test.ts > tools del asistente > expone exactamente las tools previstas y ninguna para comprar 397ms
+ ✓ |integration| tests/integration/tools.test.ts > tools del asistente > search_products respeta el presupuesto y devuelve precios en USD 341ms
+ ✓ |integration| tests/integration/tools.test.ts > tools del asistente > search_products puede ordenar por precio para encontrar el más barato 304ms
+ ✓ |integration| tests/integration/tools.test.ts > tools del asistente > search_products avisa cuando no hay resultados 306ms
+ ✓ |integration| tests/integration/tools.test.ts > tools del asistente > get_product_details devuelve el estado actual o un error explícito 278ms
+ ✓ |integration| tests/integration/tools.test.ts > tools del asistente > compare_products alinea specs y devuelve error con ids inválidos 293ms
+ ✓ |integration| tests/integration/tools.test.ts > tools del asistente > get_related_products ofrece alternativas activas para un producto sin stock 292ms
+ ✓ |integration| tests/integration/tools.test.ts > tools del asistente > add_to_cart devuelve el error de dominio como dato, sin lanzar 285ms
+ ✓ |integration| tests/integration/tools.test.ts > tools del asistente > add_to_cart / update_cart_item / remove_from_cart informan la cantidad anterior 332ms
+ ✓ |integration| tests/integration/tools.test.ts > tools del asistente > propose_checkout no compra: sólo indica si se puede ir al checkout 296ms
+(node:42261) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |integration| tests/integration/cart.test.ts > carrito > suma cantidades del mismo producto en una línea 375ms
+ ✓ |integration| tests/integration/cart.test.ts > carrito > rechaza agregar más que lo disponible sin modificar el carrito 285ms
+ ✓ |integration| tests/integration/cart.test.ts > carrito > rechaza productos discontinuados 281ms
+ ✓ |integration| tests/integration/cart.test.ts > carrito > rechaza productos sin stock 307ms
+ ✓ |integration| tests/integration/cart.test.ts > carrito > rechaza productos inexistentes 295ms
+ ✓ |integration| tests/integration/cart.test.ts > carrito > marca la línea si el stock bajó después de agregarla 269ms
+ ✓ |integration| tests/integration/cart.test.ts > carrito > cambia la cantidad y quita líneas devolviendo la cantidad anterior 301ms
+ ✓ |integration| tests/integration/cart.test.ts > carrito > mantiene carritos independientes por sesión 333ms
+ ✓ |integration| tests/integration/cart.test.ts > carrito > devuelve un carrito vacío para una sesión nueva 276ms
+ ✓ |integration| tests/integration/cart.test.ts > fixtures > setAvailability deja el total pedido 276ms
+(node:42280) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |integration| tests/integration/agent.test.ts > agente > usa las tools sobre datos reales y responde en varios pasos 389ms
+stderr | tests/integration/agent.test.ts > agente > no puede registrar compras aunque el modelo lo intente
+[assistant] error: AI_NoSuchToolError: Model tried to call unavailable tool 'place_order'. Available tools: search_products, get_product_details, compare_products, get_related_products, get_cart, add_to_cart, update_cart_item, remove_from_cart, get_orders, propose_checkout.
+
+stderr | tests/integration/agent.test.ts > agente > no puede registrar compras aunque el modelo lo intente
+[assistant] error: AI_NoSuchToolError: Model tried to call unavailable tool 'place_order'. Available tools: search_products, get_product_details, compare_products, get_related_products, get_cart, add_to_cart, update_cart_item, remove_from_cart, get_orders, propose_checkout.
+
+ ✓ |integration| tests/integration/agent.test.ts > agente > no puede registrar compras aunque el modelo lo intente 283ms
+ ✓ |integration| tests/integration/agent.test.ts > agente > cambia al modelo de respaldo si el principal está saturado 300ms
+ ✓ |integration| tests/integration/agent.test.ts > agente > si el modelo principal no responde, corta por timeout y usa el de respaldo 526ms
+ ✓ |integration| tests/integration/agent.test.ts > agente > si todos los modelos fallan, emite un error claro en español 866ms
+ ✓ |integration| tests/integration/agent.test.ts > historial del chat > una sesión no puede sobrescribir mensajes de otra reutilizando el id 474ms
+ ✓ |integration| tests/integration/agent.test.ts > historial del chat > guarda y recupera la conversación de la sesión 520ms
+(node:42299) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |integration| tests/integration/seed.test.ts > importDataset > importa todas las hojas del dataset 2ms
+ ✓ |integration| tests/integration/seed.test.ts > importDataset > es idempotente 603ms
+ ✓ |integration| tests/integration/seed.test.ts > importDataset > separa listas y guarda precios 3ms
+ ✓ |integration| tests/integration/seed.test.ts > importDataset > conserva los productos inactivos 7ms
+ ✓ |integration| tests/integration/seed.test.ts > resetOperationalState > restaura el inventario del dataset 351ms
+(node:42311) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |integration| tests/integration/search.test.ts > searchProducts (semántica) > ordena por similitud con la consulta 16ms
+ ✓ |integration| tests/integration/search.test.ts > searchProducts (semántica) > respeta el precio máximo y la categoría 2ms
+ ✓ |integration| tests/integration/search.test.ts > searchProducts (semántica) > filtra sólo con stock 2ms
+ ✓ |integration| tests/integration/search.test.ts > searchProducts (semántica) > excluye discontinuados por defecto 4ms
+ ✓ |integration| tests/integration/search.test.ts > searchProducts (semántica) > ordena por precio cuando se pide el más barato 3ms
+ ✓ |integration| tests/integration/search.test.ts > searchProducts (semántica) > ordena por rating 2ms
+ ✓ |integration| tests/integration/search.test.ts > searchProducts (semántica) > explica coincidencias con los usos recomendados 3ms
+ ✓ |integration| tests/integration/search.test.ts > searchProducts (fallback por palabras clave) > usa búsqueda por texto si los embeddings fallan 4ms
+ ✓ |integration| tests/integration/search.test.ts > searchProducts (fallback por palabras clave) > encuentra por nombre de marca aunque la consulta no sea inglés 2ms
+ ✓ |integration| tests/integration/search.test.ts > searchProducts (fallback por palabras clave) > devuelve lista vacía si no hay coincidencias 3ms
+(node:42322) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |integration| tests/integration/catalog.test.ts > listProducts > lista una categoría sin incluir discontinuados por defecto 5ms
+ ✓ |integration| tests/integration/catalog.test.ts > listProducts > filtra por precio máximo 2ms
+ ✓ |integration| tests/integration/catalog.test.ts > listProducts > filtra sólo productos con stock 4ms
+ ✓ |integration| tests/integration/catalog.test.ts > listProducts > pagina de a 24 por defecto 3ms
+ ✓ |integration| tests/integration/catalog.test.ts > getProduct > suma la disponibilidad de todos los depósitos 280ms
+ ✓ |integration| tests/integration/catalog.test.ts > getProduct > devuelve null si no existe 1ms
+ ✓ |integration| tests/integration/catalog.test.ts > compareProducts > alinea las specs de los productos comparados 8ms
+ ✓ |integration| tests/integration/catalog.test.ts > compareProducts > exige entre 2 y 4 productos 1ms
+ ✓ |integration| tests/integration/catalog.test.ts > compareProducts > falla con un id inexistente 3ms
+ ✓ |integration| tests/integration/catalog.test.ts > listCategories > devuelve las 12 categorías 1ms
+(node:42328) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |integration| tests/integration/schema.test.ts > schema > rechaza inventario con disponibilidad negativa 16ms
+ ✓ |integration| tests/integration/schema.test.ts > schema > no permite dos órdenes con la misma idempotency_key 5ms
+ ✓ |integration| tests/integration/schema.test.ts > schema > tiene la secuencia de números de orden 1ms
+(node:42331) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | tests/integration/transcribe-route.test.ts > POST /api/transcribe > devuelve un error amable si Gemini falla
+[transcribe] error: Error: boom
+
+ ✓ |integration| tests/integration/transcribe-route.test.ts > POST /api/transcribe > devuelve el texto transcripto 16ms
+ ✓ |integration| tests/integration/transcribe-route.test.ts > POST /api/transcribe > rechaza formatos que no son audio 1ms
+ ✓ |integration| tests/integration/transcribe-route.test.ts > POST /api/transcribe > rechaza audios demasiado grandes 6ms
+ ✓ |integration| tests/integration/transcribe-route.test.ts > POST /api/transcribe > rechaza audio vacío o ausente 1ms
+ ✓ |integration| tests/integration/transcribe-route.test.ts > POST /api/transcribe > avisa cuando no se entendió nada 1ms
+ ✓ |integration| tests/integration/transcribe-route.test.ts > POST /api/transcribe > informa si la IA no está configurada 0ms
+ ✓ |integration| tests/integration/transcribe-route.test.ts > POST /api/transcribe > devuelve un error amable si Gemini falla 1ms
+
+ Test Files  9 passed (9)
+      Tests  72 passed (72)
+   Start at  08:40:43
+   Duration  20.69s (tests 89%, import 11%)
+
