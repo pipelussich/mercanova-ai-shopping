@@ -4,7 +4,7 @@ import { CatalogFilters } from "@/components/catalog-filters";
 import { ProductCard } from "@/components/product-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buttonVariants } from "@/components/ui/button";
-import { getDb } from "@/db/client";
+import { requestDb } from "@/server/request-db";
 import { queryEmbedder } from "@/ai/embeddings";
 import { listBrands, listProducts, type ProductFilters } from "@/server/catalog/catalog-service";
 import { searchProducts } from "@/server/search/search-service";
@@ -45,13 +45,13 @@ export default function CatalogPage({ searchParams }: PageProps<"/">) {
 }
 
 async function Filters() {
-  const brands = await listBrands(getDb());
+  const brands = await listBrands(await requestDb());
   return <CatalogFilters brands={brands} />;
 }
 
 async function SearchResults({ f }: { f: ReturnType<typeof parseFilters> & { q: string } }) {
   const { items, mode } = await searchProducts(
-    getDb(),
+    await requestDb(),
     { ...f, query: f.q, limit: 20 },
     { embedQuery: queryEmbedder() },
   );
@@ -80,7 +80,7 @@ async function Results({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
   const f = parseFilters(sp);
   if (f.q) return <SearchResults f={{ ...f, q: f.q }} />;
-  const { items, total } = await listProducts(getDb(), f);
+  const { items, total } = await listProducts(await requestDb(), f);
   const pages = Math.max(1, Math.ceil(total / 24));
 
   if (items.length === 0)

@@ -2,7 +2,7 @@ import { createUIMessageStreamResponse, type UIMessage } from "ai";
 import { z } from "zod";
 import { createAgentStream } from "@/ai/agent";
 import { queryEmbedder } from "@/ai/embeddings";
-import { getDb } from "@/db/client";
+import { requestDb } from "@/server/request-db";
 import { getEnv } from "@/env";
 import { clearMessages, loadMessages, saveMessages } from "@/server/chat/chat-repo";
 import { getSessionId } from "@/server/session";
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     if (text.length > 2000)
       return errorResponse(422, "MESSAGE_TOO_LONG", "El mensaje es demasiado largo (máx. 2000 caracteres).");
 
-    const db = getDb();
+    const db = await requestDb();
     const sessionId = await getSessionId();
     const history = await loadMessages(db, sessionId);
     const messages = [...history.filter((m) => m.id !== message.id), message as UIMessage];
@@ -55,14 +55,14 @@ export async function POST(req: Request) {
 
 export async function GET() {
   return handleRoute(async () => {
-    const messages = await loadMessages(getDb(), await getSessionId());
+    const messages = await loadMessages(await requestDb(), await getSessionId());
     return Response.json({ messages, enabled: getEnv().hasAI });
   });
 }
 
 export async function DELETE() {
   return handleRoute(async () => {
-    await clearMessages(getDb(), await getSessionId());
+    await clearMessages(await requestDb(), await getSessionId());
     return new Response(null, { status: 204 });
   });
 }

@@ -4,7 +4,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getDb } from "@/db/client";
+import { requestDb } from "@/server/request-db";
 import { formatUSD } from "@/domain/money";
 import { dateFormat } from "@/lib/format";
 import { listOrders } from "@/server/orders/order-service";
@@ -22,7 +22,7 @@ export default function OrdersPage() {
 }
 
 async function Orders() {
-  const orders = await listOrders(getDb(), await getSessionId());
+  const orders = await listOrders(await requestDb(), await getSessionId());
   if (orders.length === 0)
     return (
       <Card>

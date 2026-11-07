@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.env
+.env.*
+!.env.example
+.claude
+.superpowers
+playwright-report
+test-results
+dist-scripts
+coverage
+*.log
+.DS_Store

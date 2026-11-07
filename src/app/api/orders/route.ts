@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getDb } from "@/db/client";
+import { requestDb } from "@/server/request-db";
 import { listOrders, placeOrder } from "@/server/orders/order-service";
 import { getSessionId } from "@/server/session";
 import { handleRoute, readJson } from "../_lib/respond";
@@ -13,11 +13,11 @@ const confirmation = z.looseObject({
 export async function POST(req: Request) {
   return handleRoute(async () => {
     const body = confirmation.parse(await readJson(req));
-    const order = await placeOrder(getDb(), await getSessionId(), body as Parameters<typeof placeOrder>[2]);
+    const order = await placeOrder(await requestDb(), await getSessionId(), body as Parameters<typeof placeOrder>[2]);
     return Response.json(order, { status: 201 });
   });
 }
 
 export async function GET() {
-  return handleRoute(async () => Response.json(await listOrders(getDb(), await getSessionId())));
+  return handleRoute(async () => Response.json(await listOrders(await requestDb(), await getSessionId())));
 }

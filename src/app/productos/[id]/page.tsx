@@ -10,7 +10,7 @@ import { ProductCard } from "@/components/product-card";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getDb } from "@/db/client";
+import { requestDb } from "@/server/request-db";
 import { categoryLabel, RELATION_LABELS_ES } from "@/domain/categories";
 import { stockLabelEs, stockStatus } from "@/domain/stock";
 import { getProduct, type ProductDetail } from "@/server/catalog/catalog-service";
@@ -25,7 +25,7 @@ export default function ProductPage({ params }: PageProps<"/productos/[id]">) {
 
 async function ProductView({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const product = await getProduct(getDb(), decodeURIComponent(id));
+  const product = await getProduct(await requestDb(), decodeURIComponent(id));
   if (!product) notFound();
   return <ProductDetailView product={product} />;
 }
@@ -54,12 +54,23 @@ function ProductDetailView({ product: p }: { product: ProductDetail }) {
           </div>
           <h1 className="text-3xl font-semibold tracking-tight">{p.name}</h1>
           <p className="text-muted-foreground">{p.shortDescription}</p>
-          <Price priceCents={p.priceCents} listPriceCents={p.listPriceCents} discountPercent={p.discountPercent} size="lg" />
+          <Price
+            priceCents={p.priceCents}
+            listPriceCents={p.listPriceCents}
+            discountPercent={p.discountPercent}
+            size="lg"
+          />
           <div>
             <AvailabilityBadge status={p.stockStatus} availableQty={p.availableQty} active={p.active} />
           </div>
           <div className="flex flex-wrap gap-2" data-slot="product-actions">
-            <AddToCartButton productId={p.id} productName={p.name} active={p.active} availableQty={p.availableQty} size="lg" />
+            <AddToCartButton
+              productId={p.id}
+              productName={p.name}
+              active={p.active}
+              availableQty={p.availableQty}
+              size="lg"
+            />
             <CompareToggle id={p.id} name={p.name} size="default" />
           </div>
           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">

@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { CheckCircle2, ChevronLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getDb } from "@/db/client";
+import { requestDb } from "@/server/request-db";
 import { formatUSD } from "@/domain/money";
 import { getOrder } from "@/server/orders/order-service";
 import { getSessionId } from "@/server/session";
@@ -26,7 +26,7 @@ async function OrderView({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const [{ id }, sp] = await Promise.all([params, searchParams]);
-  const order = await getOrder(getDb(), await getSessionId(), decodeURIComponent(id));
+  const order = await getOrder(await requestDb(), await getSessionId(), decodeURIComponent(id));
   if (!order) notFound();
   const isNew = sp.nueva === "1";
 

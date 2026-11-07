@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { OrderReview } from "@/components/checkout/order-review";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getDb } from "@/db/client";
+import { requestDb } from "@/server/request-db";
 import { listWarehouses } from "@/server/catalog/catalog-service";
 
 export default function ConfirmPage() {
@@ -17,6 +17,6 @@ export default function ConfirmPage() {
 }
 
 async function Review() {
-  const warehouses = await listWarehouses(getDb());
+  const warehouses = await listWarehouses(await requestDb());
   return <OrderReview warehouses={warehouses.map((w) => ({ id: w.id, name: w.name, city: w.city }))} />;
 }

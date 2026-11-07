@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getDb } from "@/db/client";
+import { requestDb } from "@/server/request-db";
 import { removeFromCart, setCartItemQuantity } from "@/server/cart/cart-service";
 import { getSessionId } from "@/server/session";
 import { handleRoute, readJson } from "../../../_lib/respond";
@@ -10,13 +10,15 @@ export async function PATCH(req: Request, ctx: RouteContext<"/api/cart/items/[pr
   return handleRoute(async () => {
     const { productId } = await ctx.params;
     const { quantity } = body.parse(await readJson(req));
-    return Response.json(await setCartItemQuantity(getDb(), await getSessionId(), decodeURIComponent(productId), quantity));
+    return Response.json(
+      await setCartItemQuantity(await requestDb(), await getSessionId(), decodeURIComponent(productId), quantity),
+    );
   });
 }
 
 export async function DELETE(_req: Request, ctx: RouteContext<"/api/cart/items/[productId]">) {
   return handleRoute(async () => {
     const { productId } = await ctx.params;
-    return Response.json(await removeFromCart(getDb(), await getSessionId(), decodeURIComponent(productId)));
+    return Response.json(await removeFromCart(await requestDb(), await getSessionId(), decodeURIComponent(productId)));
   });
 }

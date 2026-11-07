@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { ComparisonTable } from "@/components/comparison-table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getDb } from "@/db/client";
+import { requestDb } from "@/server/request-db";
 import { isDomainError } from "@/domain/errors";
 import { compareProducts } from "@/server/catalog/catalog-service";
 
@@ -23,7 +23,7 @@ async function Comparison({ searchParams }: { searchParams: Promise<Record<strin
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-  const result = await compareProducts(getDb(), ids).catch((err: unknown) => {
+  const result = await compareProducts(await requestDb(), ids).catch((err: unknown) => {
     if (isDomainError(err)) return { error: err.message };
     throw err;
   });

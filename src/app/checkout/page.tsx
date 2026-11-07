@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getDb } from "@/db/client";
+import { requestDb } from "@/server/request-db";
 import { listWarehouses } from "@/server/catalog/catalog-service";
 
 export default function CheckoutPage() {
@@ -19,7 +19,7 @@ export default function CheckoutPage() {
 }
 
 async function Form() {
-  const warehouses = await listWarehouses(getDb());
+  const warehouses = await listWarehouses(await requestDb());
   return (
     <CheckoutForm
       warehouses={warehouses.filter((w) => w.pickup_enabled).map((w) => ({ id: w.id, name: w.name, city: w.city }))}

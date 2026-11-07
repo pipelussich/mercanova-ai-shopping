@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getDb } from "@/db/client";
+import { requestDb } from "@/server/request-db";
 import { addToCart } from "@/server/cart/cart-service";
 import { getSessionId } from "@/server/session";
 import { handleRoute, readJson } from "../../_lib/respond";
@@ -12,6 +12,6 @@ const body = z.object({
 export async function POST(req: Request) {
   return handleRoute(async () => {
     const { productId, quantity } = body.parse(await readJson(req));
-    return Response.json(await addToCart(getDb(), await getSessionId(), productId, quantity));
+    return Response.json(await addToCart(await requestDb(), await getSessionId(), productId, quantity));
   });
 }
