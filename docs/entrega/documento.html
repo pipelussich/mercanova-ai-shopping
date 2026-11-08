@@ -92,45 +92,45 @@
 <!-- ============================================================ -->
 <section>
 <h2>1. Resumen ejecutivo</h2>
-<p>MercaNova es una tienda ficticia de tecnología que tenía un problema bastante común. El catálogo existía, pero para comprar había que saber de antemano qué producto buscar y después recorrer filtros y fichas técnicas hasta encontrarlo. Una persona que piensa "quiero auriculares cómodos para las videollamadas del trabajo y no gastar más de 200 dólares" no tenía forma de decir eso y recibir una respuesta útil.</p>
-<p>Construimos un prototipo completo de e-commerce con un asistente de compras con IA que resuelve justamente eso. La persona escribe o dicta lo que necesita, el asistente interpreta la necesidad, busca en el catálogo real, recomienda una o más opciones explicando por qué encajan, compara, pregunta cuando falta información y puede armar el carrito si se lo piden. La compra es simulada pero real dentro del sistema. Hay checkout, una pantalla de confirmación explícita, una orden con su número y un descuento de stock por depósito que queda persistido.</p>
-<p>La idea que guió todo el diseño fue que el modelo nunca sea la fuente de verdad. Los precios, el stock y las especificaciones salen siempre de la base de datos en el momento de la consulta, y la interfaz los muestra a partir de lo que devuelven las herramientas, no del texto que genera el modelo. Además el asistente no tiene ninguna herramienta para comprar. Puede llevar a la persona hasta el checkout, pero la orden solo se registra cuando ella confirma en la pantalla correspondiente.</p>
-<p>Todo corre localmente con <code>docker compose up</code>. Para la IA usamos el free tier de Google Gemini, así que el proyecto no tiene costo de uso, y si no hay API key la tienda igual funciona (sin asistente ni voz y con búsqueda por palabras clave).</p>
+<p>MercaNova es una tienda ficticia de tecnología. Su catálogo funciona, pero para comprar hay que saber de antemano qué producto se busca y moverse entre filtros y fichas técnicas. Si alguien quiere "unos auriculares cómodos para las videollamadas del trabajo, de menos de 200 dólares", el sitio no tiene cómo ayudarlo.</p>
+<p>Hicimos un prototipo de e-commerce con un asistente de compras que usa IA. La persona le escribe o le dicta lo que necesita y el asistente busca en el catálogo, recomienda algunas opciones con sus razones, compara, pregunta si le falta información y, si se lo piden, agrega productos al carrito. La compra es simulada. Pasa por un checkout, una pantalla donde hay que confirmar, y termina en una orden con número propio que descuenta el stock de cada depósito.</p>
+<p>Los precios y el stock que muestra el asistente salen de la base de datos en el momento de la consulta. El asistente tampoco puede comprar. Llega hasta ofrecer el botón del checkout y la confirmación la hace la persona.</p>
+<p>Todo se levanta con <code>docker compose up</code>. Para la IA usamos el plan gratuito de Google Gemini. Si no se configura una API key, la tienda anda igual, sin el asistente ni la voz y con una búsqueda por palabras clave.</p>
 </section>
 
 <!-- ============================================================ -->
 <section>
 <h2>2. Requerimientos implementados</h2>
-<p>Implementamos los 18 requerimientos funcionales y los 7 no funcionales de la letra. La tabla resume cómo se cubre cada uno y dónde está la prueba.</p>
+<p>Implementamos los 18 requerimientos funcionales y los 7 no funcionales. En la tabla está cómo resolvimos cada uno y dónde se puede ver.</p>
 <table>
-  <tr><th style="width:17%">Requerimiento</th><th>Cómo lo resolvimos</th><th style="width:22%">Evidencia</th></tr>
-  <tr><td>RF-01 Catálogo</td><td>Listado paginado con filtros por categoría, marca, precio máximo, solo con stock y discontinuados. Detalle con especificaciones, stock por depósito y productos relacionados.</td><td><code>catalog.test.ts</code>, figuras 1 y 3</td></tr>
-  <tr><td>RF-02 Búsqueda</td><td>Búsqueda semántica con embeddings y pgvector combinada con filtros SQL. Si la IA no está disponible cae a búsqueda de texto completo.</td><td><code>search.test.ts</code>, figura 2</td></tr>
-  <tr><td>RF-03 Asistente</td><td>Panel conversacional disponible en todas las pantallas, con un agente que usa diez herramientas sobre los servicios reales.</td><td><code>agent.test.ts</code>, evals</td></tr>
-  <tr><td>RF-04 Recomendaciones</td><td>El asistente recomienda de una a tres opciones y explica el porqué con los usos recomendados, las características y las especificaciones de cada producto.</td><td>eval <code>headphones-budget</code>, figura 5</td></tr>
-  <tr><td>RF-05 Aclaraciones</td><td>Si falta información decisiva (tipo de producto, uso o presupuesto) pregunta antes de buscar.</td><td>eval <code>ambiguous</code>, figura 10</td></tr>
-  <tr><td>RF-06 Comparación</td><td>Comparador de dos a cuatro productos en la tienda y desde el chat, con las especificaciones alineadas fila por fila.</td><td>eval <code>compare</code>, figuras 4 y 7</td></tr>
-  <tr><td>RF-07 Información actual</td><td>Cada herramienta consulta la base en el momento. Las tarjetas de precio y stock del chat se dibujan con esos datos.</td><td><code>tools.test.ts</code></td></tr>
-  <tr><td>RF-08 Voz</td><td>Botón de micrófono que graba, transcribe con Gemini y envía el texto como una consulta normal.</td><td><code>transcribe-route.test.ts</code>, figuras 13 y 14</td></tr>
-  <tr><td>RF-09 Carrito</td><td>Agregar, quitar, cambiar cantidades y ver el total, desde la tienda o pidiéndoselo al asistente (con opción de deshacer).</td><td><code>cart.test.ts</code>, E2E</td></tr>
-  <tr><td>RF-10 Disponibilidad</td><td>Se valida al agregar, al cambiar cantidades y otra vez dentro de la transacción de compra, con bloqueo de filas.</td><td><code>orders.test.ts</code>, figura 16</td></tr>
-  <tr><td>RF-11 Checkout</td><td>Nombre, email, teléfono y entrega a domicilio (dirección y departamento) o retiro en uno de los cinco locales.</td><td><code>checkout.test.ts</code>, figura 17</td></tr>
-  <tr><td>RF-12 Confirmación</td><td>Pantalla de revisión con el botón "Confirmar compra". Es la única forma de crear una orden.</td><td>eval <code>no-purchase</code>, figura 18</td></tr>
-  <tr><td>RF-13 Compra ficticia</td><td>No se piden datos de tarjeta ni se integra ninguna pasarela.</td><td>E2E</td></tr>
-  <tr><td>RF-14 Orden</td><td>Identificador <code>MN-ORD-AAAAMMDD-NNNN</code>, ítems con el precio al momento de la compra y de qué depósito sale cada unidad.</td><td><code>orders.test.ts</code>, figura 19</td></tr>
-  <tr><td>RF-15 Estado</td><td>La compra descuenta el stock por depósito y recalcula su estado (en stock, últimas unidades, sin stock).</td><td><code>orders.test.ts</code>, E2E</td></tr>
-  <tr><td>RF-16 Historial</td><td>Pantalla "Mis órdenes" con el detalle de cada una. El asistente también puede consultarlas.</td><td>figura 20</td></tr>
-  <tr><td>RF-17 Casos límite</td><td>Errores de dominio con mensajes en español, estados vacíos, página de error con reintento y respaldo cuando la IA falla.</td><td>sección 9</td></tr>
-  <tr><td>RF-18 No invención</td><td>El modelo no es fuente de datos. Los evals comprueban que todo monto citado coincida con la base.</td><td>sección 4 y evals</td></tr>
-  <tr><td>RNF-01 a RNF-07</td><td>Docker Compose con base y app, variables en <code>.env</code> (con <code>.env.example</code>), manejo de errores sin estado inconsistente, testing en cuatro niveles, código en capas y prueba de levantado desde un clone limpio.</td><td>secciones 10 y 12</td></tr>
+  <tr><th style="width:17%">Requerimiento</th><th>Cómo lo resolvimos</th><th style="width:22%">Dónde verlo</th></tr>
+  <tr><td>RF-01 Catálogo</td><td>Listado paginado con filtros por categoría, marca, precio máximo, solo con stock y discontinuados. Cada producto tiene su ficha con especificaciones, stock por depósito y productos relacionados.</td><td><code>catalog.test.ts</code>, figuras 1 y 3</td></tr>
+  <tr><td>RF-02 Búsqueda</td><td>Búsqueda semántica con embeddings y pgvector, combinada con filtros. Sin IA disponible pasa a búsqueda de texto.</td><td><code>search.test.ts</code>, figura 2</td></tr>
+  <tr><td>RF-03 Asistente</td><td>Panel de chat disponible en todas las pantallas. Atrás hay un agente con diez herramientas.</td><td><code>agent.test.ts</code>, evals</td></tr>
+  <tr><td>RF-04 Recomendaciones</td><td>Recomienda entre una y tres opciones y explica por qué, usando los usos recomendados, las características y las especificaciones.</td><td>eval <code>headphones-budget</code>, figura 5</td></tr>
+  <tr><td>RF-05 Aclaraciones</td><td>Cuando falta el tipo de producto, el uso o el presupuesto, pregunta antes de buscar.</td><td>eval <code>ambiguous</code>, figura 10</td></tr>
+  <tr><td>RF-06 Comparación</td><td>Comparador de dos a cuatro productos, en la tienda y en el chat.</td><td>eval <code>compare</code>, figuras 4 y 7</td></tr>
+  <tr><td>RF-07 Información actual</td><td>Las herramientas leen la base en cada llamada y las tarjetas del chat muestran esos datos.</td><td><code>tools.test.ts</code></td></tr>
+  <tr><td>RF-08 Voz</td><td>Botón de micrófono. El audio se transcribe con Gemini y se manda como un mensaje más.</td><td><code>transcribe-route.test.ts</code>, figuras 13 y 14</td></tr>
+  <tr><td>RF-09 Carrito</td><td>Agregar, quitar, cambiar cantidades y ver el total, a mano o pidiéndoselo al asistente.</td><td><code>cart.test.ts</code>, E2E</td></tr>
+  <tr><td>RF-10 Disponibilidad</td><td>Se controla al agregar, al cambiar la cantidad y otra vez al confirmar la compra.</td><td><code>orders.test.ts</code>, figura 16</td></tr>
+  <tr><td>RF-11 Checkout</td><td>Nombre, email, teléfono y envío a domicilio o retiro en uno de los cinco locales.</td><td><code>checkout.test.ts</code>, figura 17</td></tr>
+  <tr><td>RF-12 Confirmación</td><td>Pantalla de revisión con el botón "Confirmar compra". La orden se crea desde ahí.</td><td>eval <code>no-purchase</code>, figura 18</td></tr>
+  <tr><td>RF-13 Compra ficticia</td><td>Sin pasarela de pago ni datos de tarjeta.</td><td>E2E</td></tr>
+  <tr><td>RF-14 Orden</td><td>Número <code>MN-ORD-AAAAMMDD-NNNN</code>, ítems con el precio del momento y de qué depósito sale cada unidad.</td><td><code>orders.test.ts</code>, figura 19</td></tr>
+  <tr><td>RF-15 Estado</td><td>Descuenta el stock por depósito y le actualiza el estado (en stock, últimas unidades, sin stock).</td><td><code>orders.test.ts</code>, E2E</td></tr>
+  <tr><td>RF-16 Historial</td><td>Pantalla "Mis órdenes". El asistente también las puede consultar.</td><td>figura 20</td></tr>
+  <tr><td>RF-17 Casos límite</td><td>Mensajes de error en español, pantallas vacías, página de error con reintento y respaldo cuando falla la IA.</td><td>sección 9</td></tr>
+  <tr><td>RF-18 No invención</td><td>Los datos salen de las herramientas, y los evals controlan que los montos que nombra el asistente existan en la base.</td><td>sección 4 y evals</td></tr>
+  <tr><td>RNF-01 a RNF-07</td><td>Docker Compose con la base y la app, variables en <code>.env</code> con su <code>.env.example</code>, tests en cuatro niveles, código ordenado en capas, y una prueba de levantado desde un clone limpio.</td><td>secciones 10 y 12</td></tr>
 </table>
-<p>Hay dos cosas que decidimos dejar fuera porque la letra las pone fuera de alcance. No hay login (cada visitante tiene una sesión anónima por cookie) y la voz es solo de entrada, el asistente responde por escrito.</p>
+<p>No hay login, que la letra deja fuera de alcance. A cada visitante lo identificamos con una cookie de sesión anónima. La voz sirve para hacer consultas y el asistente siempre contesta por escrito.</p>
 </section>
 
 <!-- ============================================================ -->
 <section>
 <h2>3. Arquitectura general</h2>
-<p>La solución es una sola aplicación Next.js que contiene la interfaz y el backend, más una base PostgreSQL con la extensión pgvector. Gemini se usa como servicio externo. Elegimos una sola app porque el problema no justificaba dos servicios separados, y porque Next.js permite tener las pantallas y los endpoints HTTP en el mismo proyecto sin perder la separación de responsabilidades. Esa separación la hicimos por capas dentro del código.</p>
+<p>Es una sola aplicación Next.js con las pantallas y el backend juntos, más una base PostgreSQL con la extensión pgvector. Gemini es un servicio externo al que la app llama por API.</p>
 <div class="mermaid">
 flowchart LR
   U["Navegador<br/>(React)"] -->|HTTP| P["proxy.ts<br/>sesión anónima"]
@@ -145,61 +145,56 @@ flowchart LR
   AI -->|Interactions API| G["Google Gemini<br/>free tier"]
 </div>
 <p style="text-align:center;font-size:8.5pt;color:var(--muted)">Figura A. Componentes de la solución y sus dependencias.</p>
-
+<p>Adentro el código está separado en carpetas por capa.</p>
 <table>
-  <tr><th style="width:22%">Componente</th><th>Responsabilidad</th></tr>
-  <tr><td><code>src/domain</code></td><td>Reglas de negocio puras, sin base ni framework. Manejo de plata en centavos, umbrales de stock, validación de cantidades, asignación de unidades a depósitos y validación del checkout. No importa nada del resto del proyecto, por eso se testea con tests unitarios simples.</td></tr>
-  <tr><td><code>src/server</code></td><td>Servicios y repositorios sobre PostgreSQL con Drizzle. Acá están el catálogo, la búsqueda híbrida, el carrito, la orden transaccional, el historial del chat y la importación del dataset.</td></tr>
-  <tr><td><code>src/ai</code></td><td>Todo lo que habla con Gemini. El provider con reintentos y modelo de respaldo, los embeddings, la transcripción, las diez herramientas, el prompt del asistente y el agente.</td></tr>
-  <tr><td><code>src/app</code></td><td>Pantallas y endpoints HTTP. Los endpoints son finos, validan la entrada con Zod, llaman a un servicio y traducen errores a respuestas en español.</td></tr>
-  <tr><td><code>src/proxy.ts</code></td><td>Crea la cookie de sesión anónima antes de cualquier request, para que carrito, órdenes y chat queden asociados a la persona sin necesidad de login.</td></tr>
-  <tr><td>PostgreSQL + pgvector</td><td>Catálogo importado del dataset, estado operacional (stock, carritos, órdenes, conversaciones) y los vectores de búsqueda semántica.</td></tr>
+  <tr><th style="width:22%">Componente</th><th>Qué hace</th></tr>
+  <tr><td><code>src/domain</code></td><td>Las reglas de negocio sin base de datos de por medio. Cálculos de plata en centavos, umbrales de stock, validación de cantidades y del checkout, y el reparto de unidades entre depósitos.</td></tr>
+  <tr><td><code>src/server</code></td><td>Servicios que trabajan con PostgreSQL a través de Drizzle. Catálogo, búsqueda, carrito, órdenes, historial del chat e importación del dataset.</td></tr>
+  <tr><td><code>src/ai</code></td><td>Todo lo que habla con Gemini. Reintentos y modelo de respaldo, embeddings, transcripción, las herramientas del agente, el prompt y el agente.</td></tr>
+  <tr><td><code>src/app</code></td><td>Pantallas y endpoints. Los endpoints validan lo que reciben con Zod, llaman a un servicio y devuelven el error en español si algo falla.</td></tr>
+  <tr><td><code>src/proxy.ts</code></td><td>Crea la cookie de sesión en la primera visita, y con ella se asocian el carrito, las órdenes y el chat.</td></tr>
+  <tr><td>PostgreSQL + pgvector</td><td>El catálogo importado, el stock, los carritos, las órdenes, las conversaciones y los vectores de la búsqueda.</td></tr>
 </table>
-<p>La regla de dependencias es simple. El dominio no conoce a nadie, los servicios usan el dominio y la base, la IA usa los servicios, y la capa de presentación nunca toca la base directamente. Esa regla está escrita en <code>AGENTS.md</code> y forma parte del checklist de la skill de code review.</p>
+<p>Las dependencias van en un solo sentido. El dominio no usa a nadie, los servicios usan el dominio y la base, la IA usa los servicios y las pantallas usan servicios e IA.</p>
 </section>
 
 <!-- ============================================================ -->
 <section>
 <h2>4. Arquitectura de IA</h2>
-<h3>Qué hace el modelo y qué no</h3>
-<p>El modelo tiene tres trabajos. Entender lo que la persona pide (aunque lo diga de forma vaga o en otro idioma que el catálogo, que está en inglés), decidir qué capacidades de la aplicación usar y en qué orden, y explicar el resultado en español. No guarda estado propio, no calcula precios, no decide si hay stock y no puede comprar. Todo eso lo resuelve la aplicación.</p>
-<p>Usamos un único agente con herramientas y no un sistema multi-agente. El problema tiene un solo flujo conversacional y un agente bien acotado alcanza. En cada turno puede encadenar hasta seis pasos, por ejemplo buscar, pedir el detalle de dos productos y después responder.</p>
+<h3>Qué hace el modelo</h3>
+<p>El modelo interpreta lo que la persona pide, decide qué herramientas usar y explica el resultado en español. Esto último pesa más de lo que parece, porque el catálogo está en inglés y las consultas llegan en español. Precios, stock y la compra los maneja la aplicación.</p>
+<p>Usamos un solo agente con herramientas. En cada mensaje puede encadenar hasta seis pasos, por ejemplo buscar, pedir el detalle de dos productos y recién ahí responder.</p>
 
 <h3>Cómo accede a la información</h3>
-<p>El modelo no recibe el catálogo en el prompt. Accede a los datos solo a través de diez herramientas que llaman a los mismos servicios que usa la tienda.</p>
+<p>Para buscar productos, ver detalles o tocar el carrito, el modelo usa herramientas que llaman a los mismos servicios que la tienda. Armamos diez.</p>
 <table>
   <tr><th style="width:24%">Herramienta</th><th>Qué hace</th></tr>
-  <tr><td><code>search_products</code></td><td>Búsqueda semántica con filtros de categoría, marca, precio y stock, y orden por relevancia, precio o rating. Devuelve hasta seis productos con precio y stock actuales.</td></tr>
-  <tr><td><code>get_product_details</code></td><td>Ficha completa de un producto, con especificaciones, stock por depósito, garantía y usos recomendados.</td></tr>
-  <tr><td><code>compare_products</code></td><td>Tabla comparativa de dos a cuatro productos con las especificaciones alineadas.</td></tr>
-  <tr><td><code>get_related_products</code></td><td>Alternativas, accesorios y productos que se compran juntos, según las relaciones del dataset.</td></tr>
-  <tr><td><code>get_cart</code></td><td>Carrito actual con precios, total y avisos de stock.</td></tr>
-  <tr><td><code>add_to_cart</code>, <code>update_cart_item</code>, <code>remove_from_cart</code></td><td>Modifican el carrito validando stock. Devuelven la cantidad anterior para que la interfaz ofrezca deshacer.</td></tr>
-  <tr><td><code>get_orders</code></td><td>Órdenes de la sesión.</td></tr>
-  <tr><td><code>propose_checkout</code></td><td>Revisa si el carrito está listo y muestra un botón al checkout. No compra.</td></tr>
+  <tr><td><code>search_products</code></td><td>Búsqueda semántica con filtros de categoría, marca, precio y stock. Se puede ordenar por relevancia, precio o rating. Devuelve hasta seis productos.</td></tr>
+  <tr><td><code>get_product_details</code></td><td>Ficha completa de un producto con especificaciones, stock por depósito y garantía.</td></tr>
+  <tr><td><code>compare_products</code></td><td>Tabla de dos a cuatro productos con las especificaciones alineadas.</td></tr>
+  <tr><td><code>get_related_products</code></td><td>Alternativas, accesorios y productos que se compran juntos, según el dataset.</td></tr>
+  <tr><td><code>get_cart</code></td><td>El carrito actual.</td></tr>
+  <tr><td><code>add_to_cart</code>, <code>update_cart_item</code>, <code>remove_from_cart</code></td><td>Cambian el carrito controlando el stock. Devuelven la cantidad que había antes, que es lo que usa el botón "Deshacer".</td></tr>
+  <tr><td><code>get_orders</code></td><td>Las órdenes de la sesión.</td></tr>
+  <tr><td><code>propose_checkout</code></td><td>Revisa si el carrito está listo y muestra el botón para ir al checkout.</td></tr>
 </table>
-<p>La búsqueda semántica usa embeddings de <code>gemini-embedding-001</code> de 768 dimensiones guardados en pgvector. Para cada producto armamos un texto con nombre, marca, categoría, descripción, usos recomendados y no recomendados, características y especificaciones. Esos vectores se calcularon una sola vez y están versionados en el repositorio, así que levantar la app no consume cuota. En cada búsqueda solo se embebe la consulta. Como el modelo de embeddings es multilingüe, una consulta en español encuentra productos descritos en inglés.</p>
+<p>Para la búsqueda calculamos un embedding por producto con <code>gemini-embedding-001</code>, a partir de un texto que junta nombre, marca, descripción, usos recomendados y especificaciones. Los guardamos en pgvector. Como el modelo de embeddings es multilingüe, "algo para mejorar el wifi de mi casa" encuentra los routers mesh aunque la ficha esté en inglés. Los vectores del catálogo los generamos una vez y quedaron en el repositorio, así en cada búsqueda solo se calcula el de la consulta.</p>
 
-<h3>Cómo se maneja el estado</h3>
-<p>El estado vive todo en la base. La conversación se guarda por sesión en la tabla <code>chat_messages</code> y en cada turno el servidor carga el historial y se lo pasa completo al modelo. A Google le pedimos explícitamente que no almacene las interacciones (<code>store: false</code>). El carrito y las órdenes no son memoria del modelo, son datos de la aplicación que el modelo consulta con herramientas. Por eso el asistente siempre ve el carrito real, aunque la persona lo haya cambiado a mano en otra pantalla.</p>
+<h3>Estado</h3>
+<p>La conversación se guarda en la base por sesión y en cada mensaje el servidor le manda al modelo el historial completo. El carrito y las órdenes los consulta con herramientas, entonces si alguien cambia el carrito a mano y vuelve al chat, el asistente ve el carrito actualizado.</p>
 
-<h3>Cómo se controlan sus acciones</h3>
-<p>Este fue el punto al que más vueltas le dimos. Los controles quedaron así.</p>
-<ul>
-  <li>No existe ninguna herramienta que cree órdenes. El asistente puede proponer el checkout, pero la compra solo se registra desde la pantalla de confirmación, con un click de la persona. Hay un test que verifica que aunque el modelo intente llamar a una herramienta de compra inventada, no se crea ninguna orden.</li>
-  <li>Las herramientas de carrito validan stock en el servidor y nunca lanzan errores al modelo. Si algo falla devuelven el motivo como dato y el asistente lo explica. El prompt le indica usarlas solo si la persona lo pidió, y cada cambio aparece en el chat con un botón "Deshacer".</li>
-  <li>Los precios y el stock que ve la persona en las tarjetas y tablas del chat se dibujan con la respuesta de la herramienta, no con el texto del modelo. Si el modelo se equivocara en un número al redactar, la tarjeta igual mostraría el dato correcto.</li>
-  <li>El prompt prohíbe afirmar datos que no salieron de una herramienta en esa conversación, le pide copiar los montos tal cual y decir explícitamente cuando algo no está en el catálogo.</li>
-  <li>Cada llamada a Gemini tiene reintentos ante errores de cuota o de servidor, un modelo de respaldo y un timeout de 20 segundos hasta el primer contenido. Si todo falla, el chat muestra un mensaje claro y la tienda sigue funcionando.</li>
-</ul>
-<p>Para medir el comportamiento armamos siete evals que corren el agente real contra la base de test (sección 10). No comparan texto exacto. Revisan qué herramientas se llamaron, si pidió aclaración, si respetó el presupuesto, si quedó alguna orden creada y si cada monto que aparece en la respuesta coincide con un precio devuelto por las herramientas.</p>
+<h3>Control de sus acciones</h3>
+<p>El asistente puede llevar a la persona hasta el checkout pero no tiene una herramienta para comprar. Lo probamos con un modelo simulado que intenta llamar a una herramienta de compra inventada, y no se crea ninguna orden.</p>
+<p>Las herramientas del carrito controlan el stock y, si algo falla, le devuelven al modelo el motivo para que lo explique. En el prompt le pedimos que las use solo cuando se lo piden, y cada cambio aparece en el chat con un botón para deshacerlo.</p>
+<p>Las tarjetas de producto, las tablas y el botón de checkout del chat se arman con lo que devolvió cada herramienta. Si el modelo escribiera mal un precio en su texto, la tarjeta igual mostraría el de la base. En el prompt además le pedimos copiar los montos tal cual y avisar cuando algo no está en el catálogo.</p>
+<p>Gemini gratis se satura seguido, así que cada llamada tiene reintentos, un modelo de respaldo y un tiempo máximo de 20 segundos para empezar a responder. Si nada funciona, el chat muestra un aviso y el resto de la tienda sigue andando.</p>
 </section>
 
 <!-- ============================================================ -->
 <section>
 <h2>5. Diagramas de secuencia</h2>
-<h3>Consulta al asistente con recomendación</h3>
-<p>El ejemplo de la letra. La persona pide auriculares para videollamadas por menos de 200 dólares. El agente decide buscar, recibe productos con datos de la base y redacta la recomendación. La interfaz dibuja las tarjetas con lo que devolvió la herramienta.</p>
+<h3>Consulta al asistente</h3>
+<p>Es el ejemplo de la letra. La persona pide auriculares para videollamadas por menos de 200 dólares, el agente busca y responde, y la pantalla dibuja las tarjetas con lo que devolvió la búsqueda.</p>
 <div class="mermaid">
 sequenceDiagram
   autonumber
@@ -223,8 +218,8 @@ sequenceDiagram
   UI-->>P: tarjetas con datos de la base y explicación
 </div>
 
-<h3>Compra con confirmación</h3>
-<p>La compra pasa por una única transacción. Primero se mira si esa confirmación ya se procesó (para que un doble click no genere dos órdenes), después se bloquean las filas del carrito y del inventario, se revalidan stock y precio, se asignan unidades a depósitos, se descuenta el stock y se registra la orden.</p>
+<h3>Compra</h3>
+<p>Al confirmar, todo pasa dentro de una transacción. Si esa misma confirmación ya se había procesado (un doble click, por ejemplo) devuelve la orden que ya existe. Si no, bloquea el carrito y el stock de esos productos, vuelve a controlar precio y stock, reparte las unidades entre depósitos, descuenta y guarda la orden.</p>
 <div class="mermaid">
 sequenceDiagram
   autonumber
@@ -260,112 +255,57 @@ sequenceDiagram
 <!-- ============================================================ -->
 <section class="page-break">
 <h2>6. Decisiones de diseño</h2>
-<p>Estas son las decisiones que más pesaron en la solución. Para cada una seguimos la estructura que sugiere la letra.</p>
+<p>Las cuatro primeras las desarrollamos con la estructura que propone la letra porque fueron las que más cambiaron el proyecto. El resto son más chicas y van en un párrafo.</p>
 
 <div class="decision">
-<h3>6.1 Una sola aplicación Next.js</h3>
-<p><b>Problema.</b> Necesitábamos frontend, backend y endpoints para el asistente, con poco tiempo y un equipo de dos personas.</p>
-<p><b>Alternativas.</b> Frontend en React con un backend separado en Python (FastAPI) o en Node, o una sola app Next.js.</p>
-<p><b>Decisión.</b> Una sola app Next.js 16 con TypeScript, organizada en capas.</p>
-<p><b>Justificación.</b> Un solo lenguaje y un solo proceso para levantar, menos configuración en Docker y tipos compartidos entre la interfaz y el servidor. La separación de responsabilidades la conseguimos con capas y una regla de dependencias, no con servicios distintos.</p>
-<p><b>Trade-offs.</b> Escalar la parte de IA por separado del resto no es trivial. Además Next 16 trae cambios fuertes (cacheComponents, proxy en lugar de middleware) que nos costaron un par de errores de build, contados en la sección 11.</p>
+<h3>6.1 Qué modelo usar sin pagar</h3>
+<p><b>Problema.</b> Necesitábamos chat con herramientas, embeddings y transcripción de voz, y no queríamos gastar plata en la IA.</p>
+<p><b>Alternativas.</b> OpenAI o Anthropic, que son pagos. Un modelo local con Ollama, que funciona pero obliga a quien corrige a bajar varios gigas y a tener una máquina que lo aguante. Gemini, que tiene un plan gratuito.</p>
+<p><b>Decisión.</b> Gemini con el Vercel AI SDK. Para el chat usamos <code>gemini-3.5-flash-lite</code> y, si falla, <code>gemini-3.1-flash-lite</code>. Los modelos se cambian desde el <code>.env</code>.</p>
+<p><b>Justificación.</b> Es gratis y tiene todo lo que precisábamos. Igual nos costó arrancar. Con una key nueva, el endpoint que aparece en casi todos los ejemplos (<code>generateContent</code>) nos devolvía 404, y los modelos 2.5 directamente ya no están habilitados para cuentas nuevas. Terminamos usando la Interactions API, que es lo que Google recomienda ahora y que el SDK ya soportaba. Antes de seguir hicimos una prueba chica con una herramienta y streaming para confirmar que andaba.</p>
+<p><b>Trade-offs.</b> El plan gratuito permite pocos pedidos por minuto y una sola pregunta al asistente puede usar varios. Con mucha gente usándolo al mismo tiempo se satura. Lo amortiguamos con reintentos y el modelo de respaldo, pero el problema sigue estando.</p>
 </div>
 
 <div class="decision">
-<h3>6.2 PostgreSQL con pgvector para datos y vectores</h3>
-<p><b>Problema.</b> Había que guardar el catálogo, el estado operacional y además hacer búsqueda semántica.</p>
-<p><b>Alternativas.</b> SQLite más una base vectorial aparte (Chroma, Qdrant), o PostgreSQL con la extensión pgvector.</p>
-<p><b>Decisión.</b> PostgreSQL 17 con pgvector, en Docker.</p>
-<p><b>Justificación.</b> Una sola base para todo permite combinar en una misma consulta la similitud semántica con filtros de precio, categoría y stock. Además PostgreSQL nos da transacciones y bloqueo de filas, que necesitábamos para la compra.</p>
-<p><b>Trade-offs.</b> Es más pesado que SQLite para un prototipo. Lo compensa que con Docker levantarlo es un solo comando.</p>
+<h3>6.2 Cómo evitar que el asistente invente datos</h3>
+<p><b>Problema.</b> La letra pide que el asistente no muestre precios ni stock que no existan (RF-18), y un modelo de lenguaje puede escribir cualquier número.</p>
+<p><b>Alternativas.</b> Confiar en el prompt. Revisar el texto generado buscando montos. Que la pantalla muestre directamente lo que devuelven las herramientas.</p>
+<p><b>Decisión.</b> Las tarjetas, tablas y botones del chat se arman con la respuesta de las herramientas y el texto del modelo queda para explicar. Además armamos evals que controlan que cada monto que aparece en la respuesta exista en la base.</p>
+<p><b>Justificación.</b> Con los evals apareció un caso que no habíamos previsto. Le pedimos "comprame el mouse más barato" y eligió uno de US$ 85,01 diciendo que era el más barato, cuando había uno de US$ 79,70. El problema era que la búsqueda ordena por parecido con la consulta y el modelo no tenía forma de pedir el más barato. Le agregamos a la búsqueda la opción de ordenar por precio y desde ahí lo resuelve bien.</p>
+<p><b>Trade-offs.</b> En el historial las tarjetas quedan con el precio del momento de la consulta. Si el precio cambia después, la confirmación de compra lo detecta y avisa.</p>
 </div>
 
 <div class="decision">
-<h3>6.3 Búsqueda híbrida con embeddings precalculados</h3>
-<p><b>Problema.</b> Encontrar productos a partir de necesidades en lenguaje natural (RF-02), en español, sobre un catálogo en inglés.</p>
-<p><b>Alternativas.</b> Que el modelo traduzca la necesidad a filtros rígidos, búsqueda de texto completo, o embeddings con filtros estructurados.</p>
-<p><b>Decisión.</b> Embeddings de <code>gemini-embedding-001</code> en pgvector combinados con filtros SQL, con búsqueda de texto completo como respaldo. Los embeddings del catálogo se calculan una vez y se versionan en <code>data/embeddings.json</code>.</p>
-<p><b>Justificación.</b> El texto completo no entiende "algo para mejorar el wifi de mi casa", y los filtros rígidos son justo lo que la letra pide superar. Precalcular los vectores evita que cada persona que levanta la app gaste cuota. El free tier permite 100 textos por minuto, así que generar los 360 lleva unos ocho minutos.</p>
-<p><b>Trade-offs.</b> Si cambia el catálogo hay que regenerar el archivo (el seed detecta cuáles quedaron desactualizados). Y la similitud siempre devuelve algo, aunque no haya nada relevante, así que decir "no lo tenemos" depende del criterio del asistente.</p>
+<h3>6.3 Compra con transacción y bloqueo</h3>
+<p><b>Problema.</b> Dos personas pueden querer la última unidad al mismo tiempo, alguien puede apretar dos veces "Confirmar" o el precio puede cambiar entre que revisa la compra y la confirma.</p>
+<p><b>Alternativas.</b> Controlar el stock y descontarlo en dos pasos separados. Bloqueo optimista con un número de versión. Bloquear las filas dentro de una transacción.</p>
+<p><b>Decisión.</b> Una transacción que bloquea con <code>SELECT ... FOR UPDATE</code> el carrito y el stock, siempre en el mismo orden para no generar deadlocks, vuelve a controlar precio y stock y recién ahí descuenta. Cada intento de compra lleva una clave para que un doble click no cree dos órdenes, y la base además no acepta stock negativo.</p>
+<p><b>Justificación.</b> Para un prototipo era lo más simple que garantizaba no vender dos veces la misma unidad. Lo probamos lanzando dos compras a la vez de la única unidad disponible. Con el doble click tuvimos una sorpresa. Si las dos confirmaciones llegaban juntas, la segunda esperaba el bloqueo, encontraba el carrito vacío y devolvía "Tu carrito está vacío" en vez de la orden. Lo vimos con un test y lo arreglamos buscando la orden por su clave en ese caso.</p>
+<p><b>Trade-offs.</b> Las compras de un mismo producto se hacen de a una. Con el volumen de este prototipo no se nota.</p>
 </div>
 
 <div class="decision">
-<h3>6.4 Gemini free tier por la Interactions API, con modelo de respaldo</h3>
-<p><b>Problema.</b> La IA no podía tener costo, y teníamos que integrar chat con herramientas, embeddings y transcripción.</p>
-<p><b>Alternativas.</b> OpenAI o Anthropic (pagos), un modelo local con Ollama (pesado de correr para quien corrige), o Gemini gratis.</p>
-<p><b>Decisión.</b> Gemini a través del Vercel AI SDK. Para el chat usamos <code>gemini-3.5-flash-lite</code> con <code>gemini-3.1-flash-lite</code> de respaldo, por la Interactions API. Los modelos se configuran por variables de entorno.</p>
-<p><b>Justificación.</b> Es gratis y soporta herramientas, streaming, audio y embeddings. Nos encontramos con que las keys nuevas reciben un 404 al usar el endpoint clásico <code>generateContent</code>, y que los modelos 2.5 ya no están disponibles para cuentas nuevas. Por eso usamos la Interactions API, que es la que Google recomienda ahora y que el SDK ya soporta. Probamos con la key real que funcionara con herramientas y streaming antes de construir encima.</p>
-<p><b>Trade-offs.</b> El free tier tiene límites de alrededor de 10 pedidos por minuto, y una pregunta con varias herramientas consume varios. Lo mitigamos con reintentos, el modelo de respaldo y un timeout, pero con mucho uso simultáneo el asistente puede saturarse.</p>
+<h3>6.4 Búsqueda con embeddings</h3>
+<p><b>Problema.</b> RF-02 pide encontrar productos describiendo la necesidad, y en nuestro caso las consultas llegan en español sobre un catálogo en inglés.</p>
+<p><b>Alternativas.</b> Que el modelo traduzca la consulta a filtros. Búsqueda de texto completo. Embeddings combinados con filtros.</p>
+<p><b>Decisión.</b> Embeddings en pgvector junto con filtros SQL de precio, categoría y stock, y búsqueda de texto como respaldo.</p>
+<p><b>Justificación.</b> La búsqueda de texto no relaciona "wifi de mi casa" con "Wi-Fi 6E mesh router", y los filtros son justamente lo que la letra pide superar. Generar los 360 embeddings nos llevó unos ocho minutos por el límite del plan gratuito, que para esto es de 100 textos por minuto. Por eso quedaron guardados en el repositorio y el que levanta la app no tiene que esperar ni gastar cuota.</p>
+<p><b>Trade-offs.</b> La búsqueda siempre devuelve los productos más parecidos, aunque ninguno sirva. Se ve en la sección 13.</p>
 </div>
 
-<div class="decision">
-<h3>6.5 Un agente con herramientas, sin herramienta de compra</h3>
-<p><b>Problema.</b> El asistente tenía que usar información real, encadenar pasos y modificar el carrito, sin poder tomar decisiones sensibles por su cuenta.</p>
-<p><b>Alternativas.</b> Un único prompt con el catálogo adentro, RAG sin herramientas, un sistema multi-agente, o un agente con herramientas acotadas.</p>
-<p><b>Decisión.</b> Un agente con diez herramientas sobre los servicios reales, hasta seis pasos por turno, y ninguna herramienta que registre compras.</p>
-<p><b>Justificación.</b> Las herramientas le dan acceso a datos actuales sin meter 360 productos en el contexto. Dejar la compra fuera del alcance del modelo hace que la confirmación explícita (RF-12) dependa del código y no de que el modelo obedezca una instrucción.</p>
-<p><b>Trade-offs.</b> Cada paso es un pedido más a la API, así que las respuestas con varias herramientas tardan entre cuatro y siete segundos.</p>
-</div>
-
-<div class="decision">
-<h3>6.6 La interfaz muestra los datos de las herramientas, no los del texto</h3>
-<p><b>Problema.</b> Evitar que el asistente muestre precios o stock inventados (RF-18).</p>
-<p><b>Alternativas.</b> Confiar en el prompt, validar el texto generado con expresiones regulares, o que la interfaz use directamente la salida de las herramientas.</p>
-<p><b>Decisión.</b> Las tarjetas de producto, las tablas comparativas, los cambios de carrito y el botón de checkout del chat se dibujan con la respuesta de cada herramienta. El texto del modelo queda para explicar. Además los evals verifican que cada monto citado exista en los datos.</p>
-<p><b>Justificación.</b> Así el dato crítico nunca pasa por la generación de texto. Gracias a los evals encontramos un caso real. El asistente decía "el mouse más barato" sin haber ordenado por precio, y elegía uno de US$ 85,01 cuando había uno de US$ 79,70. Lo corregimos agregando el orden por precio a la búsqueda.</p>
-<p><b>Trade-offs.</b> Las tarjetas guardadas en el historial muestran el precio del momento en que se hizo la consulta. Igual el checkout siempre revalida contra la base.</p>
-</div>
-
-<div class="decision">
-<h3>6.7 Compra en una transacción con bloqueo e idempotencia</h3>
-<p><b>Problema.</b> Que una compra deje el stock coherente aunque haya dos compras al mismo tiempo, un doble click o un cambio de precio en el medio (RF-10 y RF-15).</p>
-<p><b>Alternativas.</b> Validar el stock antes y descontar después, usar un campo de versión (bloqueo optimista), o bloquear las filas dentro de una transacción.</p>
-<p><b>Decisión.</b> Una transacción con <code>SELECT ... FOR UPDATE</code> sobre el carrito y el inventario (en orden fijo para evitar deadlocks), revalidación de stock y precio, una clave de idempotencia por intento de compra y restricciones en la base que impiden el stock negativo.</p>
-<p><b>Justificación.</b> Es la forma más directa de garantizar que la última unidad no se venda dos veces. Lo probamos con dos compras en paralelo de la única unidad disponible, y con dos confirmaciones simultáneas con la misma clave.</p>
-<p><b>Trade-offs.</b> Las compras del mismo producto se serializan. Con el volumen de un prototipo no tiene impacto.</p>
-</div>
-
-<div class="decision">
-<h3>6.8 Voz con WAV generado en el navegador</h3>
-<p><b>Problema.</b> Convertir audio en texto sin costo y que funcione en distintos navegadores (RF-08).</p>
-<p><b>Alternativas.</b> La Web Speech API del navegador, Whisper local, o Gemini.</p>
-<p><b>Decisión.</b> El navegador graba con MediaRecorder, convierte la grabación a WAV de 16 kHz en mono y la sube. El servidor la transcribe con el modelo de chat multimodal de Gemini, con el modelo dedicado de transcripción como respaldo.</p>
-<p><b>Justificación.</b> La Web Speech API depende de Chrome y Whisper local agrega mucho peso a la imagen Docker. Chrome graba en webm, que Gemini no documenta como soportado, y por eso hacemos la conversión. Medimos los dos modelos y el multimodal tardó 1,8 segundos contra 8 del dedicado.</p>
-<p><b>Trade-offs.</b> La conversión usa algo de CPU del navegador, y un minuto de audio pesa unos 1,9 MB.</p>
-</div>
-
-<div class="decision">
-<h3>6.9 Sesión anónima por cookie</h3>
-<p><b>Problema.</b> Asociar carrito, órdenes y chat a una persona sin implementar autenticación, que está fuera de alcance.</p>
-<p><b>Alternativas.</b> Guardar todo en el navegador (localStorage), o una sesión anónima en el servidor.</p>
-<p><b>Decisión.</b> Una cookie httpOnly con un UUID que crea <code>proxy.ts</code> en la primera visita. Todo el estado queda en la base.</p>
-<p><b>Justificación.</b> Si el carrito viviera en el navegador, el asistente no podría leerlo ni modificarlo, y las órdenes no estarían persistidas.</p>
-<p><b>Trade-offs.</b> Si la persona borra las cookies pierde su historial. Para un producto real habría que agregar cuentas de usuario.</p>
-</div>
-
-<div class="decision">
-<h3>6.10 Importación del dataset con un lector propio</h3>
-<p><b>Problema.</b> Importar el Excel de la cátedra (ocho hojas) de forma repetible.</p>
-<p><b>Alternativas.</b> exceljs, SheetJS, o convertir el archivo a CSV a mano.</p>
-<p><b>Decisión.</b> Un lector propio de unas noventa líneas que descomprime el xlsx y lee el XML.</p>
-<p><b>Justificación.</b> El archivo fue generado con una herramienta que pone el prefijo <code>x:</code> en todas las etiquetas XML. Es válido según el estándar, pero exceljs no lo soporta y falla al leer el libro. La versión de SheetJS que está en npm tiene vulnerabilidades conocidas. El seed es idempotente y lee hojas y columnas por nombre.</p>
-<p><b>Trade-offs.</b> Es código que tenemos que mantener nosotros. Lo cubrimos con tests.</p>
-</div>
-
-<div class="decision">
-<h3>6.11 Estrategia de testing en cuatro niveles</h3>
-<p><b>Problema.</b> Probar lógica de negocio, persistencia, la interfaz y un componente no determinístico como el asistente.</p>
-<p><b>Alternativas.</b> Mockear la base, o testear contra una base real; testear el asistente a mano, o con evals automáticos.</p>
-<p><b>Decisión.</b> Tests unitarios del dominio, tests de integración contra un PostgreSQL efímero, E2E con Playwright contra el build de producción y evals con Gemini real.</p>
-<p><b>Justificación.</b> Los problemas que más nos importaban (concurrencia, transacciones, bloqueo de filas) solo aparecen con una base real. Para el asistente la clave es medir comportamiento, no texto exacto.</p>
-<p><b>Trade-offs.</b> Los evals consumen cuota y tardan, por eso no forman parte del check rápido y se corren aparte.</p>
-</div>
+<h3>Otras decisiones</h3>
+<p><b>Una sola app Next.js.</b> Pensamos en separar un backend en Python, pero con un solo proyecto en TypeScript había menos configuración en Docker y compartíamos los tipos entre pantallas y servidor. Next 16 nos dio algún dolor de cabeza, porque cambió bastante respecto a la versión que conocíamos.</p>
+<p><b>PostgreSQL con pgvector.</b> Teníamos que guardar el catálogo, el stock y los vectores. Con una sola base podemos filtrar por precio y stock en la misma consulta que calcula la similitud, y PostgreSQL nos daba las transacciones que necesitaba la compra.</p>
+<p><b>Voz.</b> El navegador graba el audio, lo pasa a WAV y lo manda al servidor, que lo transcribe con Gemini. La conversión la agregamos porque Chrome graba en un formato (webm) que Gemini no lista entre los que acepta. Probamos el modelo de transcripción de Gemini y en una prueba con un audio corto tardó unos 8 segundos. El modelo de chat, que también acepta audio, lo hizo en menos de 2. Quedó el de chat como principal y el de transcripción de respaldo.</p>
+<p><b>Sesión sin login.</b> El carrito podría haber vivido en el navegador, pero entonces el asistente no lo podría leer ni modificar. Usamos una cookie con un identificador y guardamos todo en la base.</p>
+<p><b>Lectura del Excel.</b> Intentamos importar el dataset con exceljs y fallaba al abrir el archivo. Mirando el XML de adentro vimos que todas las etiquetas venían con un prefijo <code>x:</code>, que es válido pero exceljs no lo entiende. La otra librería conocida, SheetJS, tiene vulnerabilidades en la versión de npm. Terminamos escribiendo un lector propio de unas noventa líneas que descomprime el archivo y lee el XML.</p>
+<p><b>Tests en cuatro niveles.</b> Tests unitarios para las reglas de negocio, de integración contra una base real (los problemas de concurrencia no aparecen si la base es simulada), E2E con Playwright y evals con Gemini real para el asistente. Los evals tardan y gastan cuota, así que se corren aparte.</p>
 </section>
 
 <!-- ============================================================ -->
 <section>
 <h2>7. Modelo de datos</h2>
-<p>El modelo tiene dos partes. El catálogo, que se importa del dataset y no se modifica, y el estado operacional, que cambia con el uso.</p>
+<p>Hay datos del catálogo, que vienen del dataset y no cambian, y datos que se van modificando con el uso, como el stock, los carritos, las órdenes y las conversaciones.</p>
 <div class="mermaid">
 erDiagram
   direction TB
@@ -386,50 +326,48 @@ erDiagram
 </div>
 <table>
   <tr><th style="width:24%">Tabla</th><th>Contenido</th></tr>
-  <tr><td><code>products</code>, <code>brands</code>, <code>categories</code></td><td>360 productos en 12 categorías y 20 marcas. Las listas del dataset separadas por punto y coma (usos recomendados, características, tags) se guardan como arreglos. 17 productos vienen marcados como inactivos y se muestran como discontinuados.</td></tr>
-  <tr><td><code>product_specs</code></td><td>3.000 especificaciones en formato atributo y valor, con unidad.</td></tr>
-  <tr><td><code>prices</code></td><td>Precio de lista, precio actual y descuento. En la base son numéricos con dos decimales y en el código manejamos centavos enteros para evitar errores de redondeo.</td></tr>
-  <tr><td><code>warehouses</code>, <code>inventory</code></td><td>Cinco depósitos y el stock de cada producto en cada uno (1.800 filas). La disponibilidad de un producto es la suma de sus depósitos. El estado de cada fila se recalcula con los mismos umbrales del dataset (0 sin stock, 1 o 2 últimas unidades, 3 o más en stock).</td></tr>
-  <tr><td><code>product_relations</code></td><td>1.080 relaciones entre productos (alternativas, accesorios, se compran juntos).</td></tr>
-  <tr><td><code>product_embeddings</code></td><td>Vector de 768 dimensiones por producto, con índice HNSW para similitud coseno, y el hash del texto del que salió.</td></tr>
-  <tr><td><code>sessions</code>, <code>cart_items</code></td><td>Sesión anónima y su carrito.</td></tr>
-  <tr><td><code>orders</code>, <code>order_items</code>, <code>order_allocations</code></td><td>La orden con sus datos de entrega y total, los ítems con el precio y nombre del momento de la compra, y de qué depósito salió cada unidad.</td></tr>
-  <tr><td><code>chat_messages</code></td><td>Los mensajes de cada conversación en el formato del AI SDK, incluidos los resultados de las herramientas.</td></tr>
+  <tr><td><code>products</code>, <code>brands</code>, <code>categories</code></td><td>360 productos en 12 categorías y 20 marcas. Los usos recomendados, características y tags venían separados por punto y coma y los guardamos como listas. Hay 17 productos inactivos que mostramos como discontinuados.</td></tr>
+  <tr><td><code>product_specs</code></td><td>Las especificaciones, una fila por atributo con su valor y unidad.</td></tr>
+  <tr><td><code>prices</code></td><td>Precio de lista, precio actual y descuento. En el código trabajamos en centavos para no tener problemas de redondeo.</td></tr>
+  <tr><td><code>warehouses</code>, <code>inventory</code></td><td>Los cinco depósitos y el stock de cada producto en cada uno. El stock de un producto es la suma de sus depósitos. Para el estado usamos los mismos umbrales del dataset (0 sin stock, 1 o 2 últimas unidades, 3 o más en stock).</td></tr>
+  <tr><td><code>product_relations</code></td><td>Alternativas, accesorios y productos que se compran juntos.</td></tr>
+  <tr><td><code>product_embeddings</code></td><td>El vector de cada producto, con un índice para buscar por similitud.</td></tr>
+  <tr><td><code>sessions</code>, <code>cart_items</code></td><td>La sesión anónima y su carrito.</td></tr>
+  <tr><td><code>orders</code>, <code>order_items</code>, <code>order_allocations</code></td><td>La orden con los datos de entrega y el total, cada ítem con el nombre y precio de ese momento, y de qué depósito salió cada unidad.</td></tr>
+  <tr><td><code>chat_messages</code></td><td>Los mensajes de cada conversación, incluidos los resultados de las herramientas.</td></tr>
 </table>
-<p>Complementamos el dataset en un solo punto. Las imágenes que trae son de relleno (placehold.co), así que para que la tienda se vea real mostramos fotos genéricas por categoría con licencia Creative Commons, conseguidas con el buscador Openverse. El dato de la base no cambia, y los autores y licencias de las 34 fotos están en <code>public/products/CREDITOS.md</code>.</p>
+<p>Al dataset le agregamos una sola cosa. Las imágenes que trae son de relleno, entonces le pusimos a cada categoría fotos genéricas con licencia Creative Commons que buscamos en Openverse. En <code>public/products/CREDITOS.md</code> está el autor y la licencia de cada una.</p>
 </section>
 
 <!-- ============================================================ -->
 <section>
 <h2>8. Frontend</h2>
-<p>La interfaz está hecha con React, Tailwind y componentes de shadcn/ui, toda en español. El asistente es un panel lateral que se abre desde cualquier pantalla, así la conversación y el flujo de compra conviven. Desde una tarjeta del chat se puede agregar al carrito, comparar o abrir el producto.</p>
+<p>La hicimos con React, Tailwind y componentes de shadcn/ui, todo en español. El asistente es un panel que se abre al costado desde cualquier pantalla, y desde las tarjetas del chat se puede agregar al carrito, comparar o abrir el producto.</p>
 <div class="grid2">
   <figure><img src="img/01-catalogo.jpeg" /><figcaption>Figura 1. Catálogo filtrado por categoría, precio y stock.</figcaption></figure>
   <figure><img src="img/02-busqueda-natural.jpeg" /><figcaption>Figura 2. Búsqueda en lenguaje natural. "Algo para mejorar el wifi de mi casa" devuelve routers.</figcaption></figure>
 </div>
-<figure><img src="img/03-detalle.jpeg" style="max-height:120mm" /><figcaption>Figura 3. Detalle de producto con stock por depósito, especificaciones y productos relacionados.</figcaption></figure>
-<figure><img src="img/04-comparador.jpeg" /><figcaption>Figura 4. Comparador. Las filas resaltadas son las especificaciones que difieren.</figcaption></figure>
-<div class="grid2">
-</div>
-<p>Las capturas del asistente están recortadas al panel del chat para que se lean bien. En todas, el panel se abre sobre la pantalla en la que estaba la persona.</p>
+<figure><img src="img/03-detalle.jpeg" style="max-height:120mm" /><figcaption>Figura 3. Ficha de producto con stock por depósito, especificaciones y relacionados.</figcaption></figure>
+<figure><img src="img/04-comparador.jpeg" /><figcaption>Figura 4. Comparador. Las filas resaltadas son las que cambian entre productos.</figcaption></figure>
+<p>Las capturas del asistente están recortadas al panel para que se lean.</p>
 <div class="grid3">
-  <figure><img src="img/chat-05b-asistente-tarjetas.jpeg" /><figcaption>Figura 5. El ejemplo de la letra. Las tarjetas salen de la herramienta de búsqueda.</figcaption></figure>
-  <figure><img src="img/chat-05-asistente-recomendacion.jpeg" /><figcaption>Figura 6. La recomendación explica por qué cada opción encaja.</figcaption></figure>
-  <figure><img src="img/chat-06-asistente-comparacion.jpeg" /><figcaption>Figura 7. "Comparame esos dos" genera la tabla comparativa dentro del chat.</figcaption></figure>
-  <figure><img src="img/chat-07-asistente-carrito.jpeg" /><figcaption>Figura 8. Agrega al carrito cuando se lo piden, con opción de deshacer.</figcaption></figure>
-  <figure><img src="img/chat-08-asistente-no-compra.jpeg" /><figcaption>Figura 9. Ante "compralo con mi tarjeta" no compra y lleva a la confirmación.</figcaption></figure>
-  <figure><img src="img/chat-09-asistente-aclaracion.jpeg" /><figcaption>Figura 10. Un pedido ambiguo recibe preguntas antes de buscar.</figcaption></figure>
-  <figure><img src="img/chat-10-asistente-sin-stock.jpeg" /><figcaption>Figura 11. Producto sin stock. Lo informa y ofrece alternativas.</figcaption></figure>
-  <figure><img src="img/chat-11-asistente-inexistente.jpeg" /><figcaption>Figura 12. Producto que la tienda no vende. No inventa precio ni stock.</figcaption></figure>
-  <figure><img src="img/chat-12-voz-grabando.jpeg" /><figcaption>Figura 13. Consulta por voz mientras graba.</figcaption></figure>
-  <figure><img src="img/chat-13-voz-resultado.jpeg" /><figcaption>Figura 14. La transcripción se envía como consulta normal, con el ícono de micrófono.</figcaption></figure>
+  <figure><img src="img/chat-05b-asistente-tarjetas.jpeg" /><figcaption>Figura 5. El ejemplo de la letra, con las tarjetas que salen de la búsqueda.</figcaption></figure>
+  <figure><img src="img/chat-05-asistente-recomendacion.jpeg" /><figcaption>Figura 6. La recomendación y por qué cada opción.</figcaption></figure>
+  <figure><img src="img/chat-06-asistente-comparacion.jpeg" /><figcaption>Figura 7. "Comparame esos dos" arma la tabla en el chat.</figcaption></figure>
+  <figure><img src="img/chat-07-asistente-carrito.jpeg" /><figcaption>Figura 8. Agrega al carrito cuando se lo piden y se puede deshacer.</figcaption></figure>
+  <figure><img src="img/chat-08-asistente-no-compra.jpeg" /><figcaption>Figura 9. Le piden que compre con tarjeta y ofrece ir al checkout.</figcaption></figure>
+  <figure><img src="img/chat-09-asistente-aclaracion.jpeg" /><figcaption>Figura 10. Ante un pedido vago, pregunta.</figcaption></figure>
+  <figure><img src="img/chat-10-asistente-sin-stock.jpeg" /><figcaption>Figura 11. Un producto sin stock y sus alternativas.</figcaption></figure>
+  <figure><img src="img/chat-11-asistente-inexistente.jpeg" /><figcaption>Figura 12. Un producto que la tienda no vende.</figcaption></figure>
+  <figure><img src="img/chat-12-voz-grabando.jpeg" /><figcaption>Figura 13. Grabando una consulta por voz.</figcaption></figure>
+  <figure><img src="img/chat-13-voz-resultado.jpeg" /><figcaption>Figura 14. La consulta transcripta, con el ícono de micrófono.</figcaption></figure>
 </div>
 <div class="flow">
   <figure><img src="img/14-carrito.jpeg" style="aspect-ratio:1600 / 470;width:100%;object-fit:cover;object-position:top" /><figcaption>Figura 15. Carrito.</figcaption></figure>
-  <figure><img src="img/15-carrito-error-stock.jpeg" style="aspect-ratio:1600 / 470;width:100%;object-fit:cover;object-position:top" /><figcaption>Figura 16. Intento de superar el stock disponible.</figcaption></figure>
-  <figure><img src="img/16-checkout.jpeg" style="aspect-ratio:1600 / 660;width:100%;object-fit:cover;object-position:top" /><figcaption>Figura 17. Checkout, paso 1, datos de entrega.</figcaption></figure>
-  <figure><img src="img/17-confirmacion.jpeg" style="aspect-ratio:1600 / 720;width:100%;object-fit:cover;object-position:top" /><figcaption>Figura 18. Paso 2, revisión y confirmación explícita.</figcaption></figure>
-  <figure><img src="img/18-orden-confirmada.jpeg" style="aspect-ratio:1600 / 600;width:100%;object-fit:cover;object-position:top" /><figcaption>Figura 19. Orden registrada con su número y de qué local sale cada ítem.</figcaption></figure>
+  <figure><img src="img/15-carrito-error-stock.jpeg" style="aspect-ratio:1600 / 470;width:100%;object-fit:cover;object-position:top" /><figcaption>Figura 16. Intento de pedir más unidades de las que hay.</figcaption></figure>
+  <figure><img src="img/16-checkout.jpeg" style="aspect-ratio:1600 / 660;width:100%;object-fit:cover;object-position:top" /><figcaption>Figura 17. Checkout, datos de entrega.</figcaption></figure>
+  <figure><img src="img/17-confirmacion.jpeg" style="aspect-ratio:1600 / 720;width:100%;object-fit:cover;object-position:top" /><figcaption>Figura 18. Revisión y confirmación de la compra.</figcaption></figure>
+  <figure><img src="img/18-orden-confirmada.jpeg" style="aspect-ratio:1600 / 600;width:100%;object-fit:cover;object-position:top" /><figcaption>Figura 19. Orden registrada, con el local del que sale cada ítem.</figcaption></figure>
   <figure><img src="img/19-historial.jpeg" style="aspect-ratio:1600 / 300;width:100%;object-fit:cover;object-position:top" /><figcaption>Figura 20. Historial de órdenes.</figcaption></figure>
 </div>
 </section>
@@ -437,40 +375,38 @@ erDiagram
 <!-- ============================================================ -->
 <section>
 <h2>9. Manejo de errores</h2>
-<p>Separamos los errores previsibles de los inesperados. Los previsibles son errores de dominio con un código y un mensaje en español, y cada endpoint los traduce a una respuesta HTTP con el estado correcto. Los inesperados devuelven un mensaje genérico, se registran en el log sin datos sensibles y nunca exponen el stack. Ninguna operación deja el estado a medias, porque los cambios de stock y órdenes ocurren dentro de una transacción.</p>
+<p>Los errores esperables (sin stock, cantidad inválida, carrito vacío y parecidos) tienen un código y un mensaje en español que el endpoint devuelve con el estado HTTP correspondiente. Los errores inesperados devuelven un mensaje genérico y quedan en el log. Los cambios de stock y la creación de órdenes van en transacciones, así que si algo falla a la mitad no queda nada a medias.</p>
 <table>
-  <tr><th style="width:32%">Caso</th><th>Comportamiento</th></tr>
-  <tr><td>Agregar más unidades que las disponibles</td><td>Error 409 con "Solo hay N unidades disponibles". El carrito no cambia y la cantidad vuelve a la anterior (figura 16).</td></tr>
-  <tr><td>Producto discontinuado o sin stock</td><td>Se muestra con su estado y el botón de agregar queda deshabilitado. El asistente ofrece alternativas (figura 11).</td></tr>
-  <tr><td>El stock bajó después de agregar al carrito</td><td>El carrito marca la línea con un aviso y no deja avanzar al checkout hasta corregirla.</td></tr>
-  <tr><td>Dos compras simultáneas de la última unidad</td><td>Una se confirma y la otra recibe "No hay stock suficiente". El stock nunca queda negativo.</td></tr>
-  <tr><td>Doble click en "Confirmar compra"</td><td>Se registra una sola orden gracias a la clave de idempotencia.</td></tr>
-  <tr><td>El precio cambió entre la revisión y la confirmación</td><td>No se registra nada y se muestra el total actualizado para volver a confirmar.</td></tr>
-  <tr><td>Carrito vacío, retiro en un local sin stock, datos del checkout inválidos</td><td>Mensajes específicos en español, con el campo marcado en el formulario.</td></tr>
-  <tr><td>Producto, marca o dato que no existe</td><td>El asistente dice que no lo tiene y ofrece lo más parecido. La página de un producto inexistente muestra "No encontramos lo que buscabas".</td></tr>
+  <tr><th style="width:32%">Caso</th><th>Qué pasa</th></tr>
+  <tr><td>Agregar más unidades de las que hay</td><td>Aparece "Solo hay N unidades disponibles", el carrito queda igual y la cantidad vuelve a la que estaba (figura 16).</td></tr>
+  <tr><td>Producto discontinuado o sin stock</td><td>Se ve el estado y el botón de agregar está deshabilitado. El asistente ofrece alternativas (figura 11).</td></tr>
+  <tr><td>El stock bajó después de agregar al carrito</td><td>El carrito marca la línea y no deja seguir al checkout hasta corregirla.</td></tr>
+  <tr><td>Dos compras a la vez de la última unidad</td><td>Una se confirma y la otra recibe "No hay stock suficiente".</td></tr>
+  <tr><td>Doble click en "Confirmar compra"</td><td>Se crea una sola orden.</td></tr>
+  <tr><td>Cambió el precio entre revisar y confirmar</td><td>No se registra nada y se muestra el total nuevo para volver a confirmar.</td></tr>
+  <tr><td>Carrito vacío, retiro en un local sin stock, datos del checkout inválidos</td><td>Mensaje concreto y el campo marcado en el formulario.</td></tr>
+  <tr><td>Producto o dato que no existe</td><td>El asistente dice que no lo tiene y sugiere lo más parecido. La ficha de un producto inexistente muestra "No encontramos lo que buscabas".</td></tr>
   <tr><td>Pedido ambiguo</td><td>El asistente pregunta antes de buscar (figura 10).</td></tr>
-  <tr><td>Gemini saturado, caído o sin responder</td><td>Reintentos, modelo de respaldo y timeout de 20 segundos. Si todo falla, "El asistente está con mucha demanda en este momento" y la tienda sigue funcionando.</td></tr>
-  <tr><td>Sin API key</td><td>La tienda funciona completa. El asistente y la voz muestran un aviso y la búsqueda usa palabras clave.</td></tr>
-  <tr><td>Audio vacío, muy largo, en un formato no soportado, sin permiso de micrófono o ininteligible</td><td>Mensaje claro en cada caso y el campo de texto sigue disponible.</td></tr>
-  <tr><td>JSON inválido o tipos incorrectos en la API</td><td>Error 400 o 422 con el motivo.</td></tr>
-  <tr><td>La base de datos no responde</td><td>Página "Algo salió mal" con un botón para reintentar. Cuando la base vuelve, la app se recupera sola.</td></tr>
+  <tr><td>Gemini saturado o sin responder</td><td>Reintenta, prueba con el modelo de respaldo y espera hasta 20 segundos. Si no hay caso, el chat dice "El asistente está con mucha demanda en este momento".</td></tr>
+  <tr><td>Sin API key</td><td>La tienda funciona. El asistente y la voz muestran un aviso y la búsqueda es por palabras clave.</td></tr>
+  <tr><td>Audio vacío, largo, en otro formato, sin permiso de micrófono o que no se entiende</td><td>Un mensaje para cada caso, y se puede seguir escribiendo.</td></tr>
+  <tr><td>Pedido a la API con JSON mal formado o datos de tipo incorrecto</td><td>Error 400 o 422 con el motivo.</td></tr>
+  <tr><td>La base de datos no responde</td><td>Página "Algo salió mal" con un botón para reintentar. Cuando la base vuelve, la app sigue normal.</td></tr>
 </table>
 </section>
 
 <!-- ============================================================ -->
 <section>
 <h2>10. Testing</h2>
-<p>Cada nivel de test apunta a un tipo de riesgo distinto.</p>
 <table>
-  <tr><th style="width:18%">Nivel</th><th>Qué cubre</th><th style="width:16%">Resultado</th></tr>
-  <tr><td>Unitarios (Vitest)</td><td>Plata y redondeo, umbrales de stock, validación de cantidades, asignación de unidades a depósitos, validación del checkout, lector del Excel, reintentos y respaldo de modelo, mapeo de errores de la API, timeout de la transcripción, conversión a WAV, links del chat, fotos por categoría.</td><td>58 de 58</td></tr>
-  <tr><td>Integración (Vitest + PostgreSQL real)</td><td>Importación del dataset, catálogo, búsqueda semántica y de respaldo, carrito, compra (incluidas dos compras simultáneas de la última unidad, doble confirmación, cambio de precio y retiro sin stock), historial, las diez herramientas, el agente con un modelo simulado (respaldo, timeout y que no pueda comprar), historial del chat y la ruta de transcripción.</td><td>72 de 72</td></tr>
-  <tr><td>End to end (Playwright)</td><td>Compra completa de punta a punta contra el build de producción y comprobación de que el stock bajó, intento de superar el stock, producto discontinuado, y el asistente sin API key.</td><td>4 de 4</td></tr>
-  <tr><td>Evals del asistente (Gemini real)</td><td>Siete casos. Recomendación con presupuesto, pedido ambiguo, producto inexistente, producto sin stock, comparación en dos turnos, pedido de compra directa y pregunta fuera de tema.</td><td>7 de 7</td></tr>
+  <tr><th style="width:18%">Nivel</th><th>Qué prueba</th><th style="width:16%">Resultado</th></tr>
+  <tr><td>Unitarios (Vitest)</td><td>Cálculos de plata, umbrales de stock, validación de cantidades y del checkout, reparto entre depósitos, el lector del Excel, reintentos y modelo de respaldo, errores de la API, conversión a WAV y otros detalles chicos.</td><td>58 de 58</td></tr>
+  <tr><td>Integración (Vitest y PostgreSQL)</td><td>Importación del dataset, catálogo, búsqueda, carrito, compra (con concurrencia, doble confirmación, cambio de precio y retiro sin stock), historial, las diez herramientas, el agente con un modelo simulado y la transcripción.</td><td>72 de 72</td></tr>
+  <tr><td>E2E (Playwright)</td><td>Una compra entera sobre el build de producción que al final controla que bajó el stock, el intento de pasarse del stock, un producto discontinuado y el asistente sin API key.</td><td>4 de 4</td></tr>
+  <tr><td>Evals (Gemini real)</td><td>Siete conversaciones. Recomendación con presupuesto, pedido vago, producto que no existe, producto sin stock, comparación en dos mensajes, pedido de compra directa y pregunta que no tiene nada que ver.</td><td>7 de 7</td></tr>
 </table>
-<p>Los tests de integración y E2E usan una base PostgreSQL efímera, separada de la de desarrollo, que se carga con el dataset completo antes de correr. Al modelo lo simulamos solo en los tests del agente, para poder forzar casos como un modelo saturado o uno que no responde. En los evals usamos Gemini real.</p>
-<p>Algunos bugs los encontraron los propios tests antes de que llegaran a la interfaz. El E2E detectó que la cantidad del carrito no volvía a su valor después de un error de stock. Un test de integración mostró que dos confirmaciones simultáneas con la misma clave devolvían "carrito vacío" en lugar de la orden. Y los evals mostraron el caso del "mouse más barato" contado en la sección 6.</p>
-<h3>Evidencia de ejecución</h3>
+<p>Los de integración y E2E corren contra una base aparte que se carga con el dataset completo antes de empezar. Al modelo lo simulamos únicamente en los tests del agente, para poder probar cosas como que esté saturado o no conteste.</p>
+<p>Varios de los arreglos que hicimos salieron de estos tests. El E2E nos mostró que, después del error de stock, el campo de cantidad se quedaba con el número inválido. Un test de integración encontró lo del doble click que contamos en 6.3. Y con los evals apareció lo del mouse más barato (6.2).</p>
 <pre>$ npm run check            # typecheck + lint + unitarios
  Test Files  14 passed (14)
       Tests  58 passed (58)
@@ -488,60 +424,44 @@ $ npm run test:e2e
 
 $ npm run evals            # Gemini real
  Resultado: 7/7 casos OK  (reporte completo en evals/last-report.md)</pre>
-<p>Las salidas completas están en <code>docs/entrega/evidencia/</code> y el detalle de cada eval, con las herramientas que usó el agente y su respuesta final, en <code>evals/last-report.md</code>.</p>
+<p>Las salidas completas están en <code>docs/entrega/evidencia/</code>, y en <code>evals/last-report.md</code> se puede ver cada conversación de los evals con las herramientas que usó el agente.</p>
 </section>
 
 <!-- ============================================================ -->
 <section>
 <h2>11. Uso de coding agents</h2>
-<p>Desarrollamos el proyecto con Claude Code (modelo Claude Opus 5.5) como coding agent. Lo usamos para todo el ciclo. Diseño, plan, implementación, tests, revisión y redacción.</p>
-<h3>Cómo trabajamos</h3>
-<ol>
-  <li>Partimos de la letra y, en una sesión de preguntas, definimos alcance, stack y restricciones (por ejemplo, que la IA no tuviera costo). Con eso el agente escribió un documento de diseño que revisamos y aprobamos antes de escribir código. Antes de mostrárnoslo, ese diseño lo leyó otro agente con contexto limpio para encontrar ambigüedades.</li>
-  <li>Del diseño salió un plan de 18 tareas con las interfaces de cada módulo y los tests que prueban cada una.</li>
-  <li>Cada tarea se hizo con TDD. Primero un test que falla, después el código mínimo para que pase, y después la suite completa. Cada tarea terminó en un commit.</li>
-  <li>Todo lo visible lo verificamos en el navegador además de con tests, incluido el asistente con Gemini real.</li>
-  <li>Al final, un agente revisor con contexto limpio revisó todo el código contra la letra, el diseño y el plan. Encontró la falta de timeout en las llamadas a Gemini, que los links del chat podían apuntar a otros sitios y que un mensaje del chat podía pisar el de otra sesión. Corregimos los tres con un test que fallaba antes del arreglo.</li>
-</ol>
-<p>Las decisiones que se tomaron sobre la marcha, como cambiar exceljs por un lector propio o invertir el orden de los modelos de transcripción, quedaron registradas con su motivo y su costo en <code>docs/registro-de-implementacion.md</code>.</p>
-<h3>AGENTS.md y skills</h3>
-<p><code>AGENTS.md</code> contiene las reglas del proyecto que el agente lee en cada sesión. Describe la arquitectura en capas y su regla de dependencias, los comandos, y nueve reglas duras. Por ejemplo que el modelo nunca compra, que ningún dato de producto puede inventarse, que la plata se maneja en centavos, que el stock solo cambia dentro de una transacción y que los secretos van solo en <code>.env</code>. <code>CLAUDE.md</code> simplemente importa ese archivo.</p>
-<p>Versionamos tres skills en <code>.claude/skills/</code>.</p>
+<p>Trabajamos con Claude Code (Claude Opus 5.5) durante todo el proyecto.</p>
+<p>Arrancamos pasándole la letra y respondiendo una ronda de preguntas sobre alcance, tecnologías y restricciones. Ahí quedó, por ejemplo, que la IA tenía que ser gratis. Con eso escribió un documento de diseño que leímos y aprobamos, y después un plan de 18 tareas. Cada tarea la hizo escribiendo primero un test que fallaba y después el código, y la cerró con un commit. Lo que se veía en pantalla lo probamos también en el navegador, incluido el asistente con Gemini.</p>
+<p>Al final le pedimos a otro agente, sin el contexto de la conversación, que revisara todo el código contra la letra. Encontró tres cosas. Las llamadas a Gemini no tenían tiempo máximo, entonces si el modelo no contestaba el chat quedaba colgado. Los links que escribe el asistente podían apuntar a otro sitio. Y un mensaje del chat podía pisar el de otra sesión. Las tres se corrigieron con su test.</p>
+<p>En el repositorio dejamos un <code>AGENTS.md</code> con las reglas del proyecto, que el agente lee al empezar cada sesión. Tiene cómo está organizado el código, los comandos y algunas reglas que no se pueden romper, por ejemplo que el asistente no compra, que los precios salen de la base y que las claves van solo en el <code>.env</code>. También quedaron versionadas tres skills en <code>.claude/skills/</code>.</p>
 <table>
-  <tr><th style="width:18%">Skill</th><th>Para qué sirve</th></tr>
-  <tr><td><code>testing</code></td><td>Decide qué nivel de test corresponde a cada cambio, cómo levantar la base de test, qué helpers usar y qué comandos tienen que pasar antes de commitear.</td></tr>
-  <tr><td><code>code-review</code></td><td>Checklist de revisión contra los requerimientos, las reglas de <code>AGENTS.md</code>, la regla de capas, el manejo de errores y los secretos, con hallazgos clasificados por severidad.</td></tr>
-  <tr><td><code>assistant-evals</code></td><td>Cómo agregar un caso de eval, cómo correrlos sin pasarse de la cuota y cómo diagnosticar una alucinación mirando qué herramientas usó el agente.</td></tr>
+  <tr><th style="width:18%">Skill</th><th>Para qué la usamos</th></tr>
+  <tr><td><code>testing</code></td><td>Qué tipo de test corresponde a cada cambio, cómo levantar la base de test y qué hay que correr antes de commitear.</td></tr>
+  <tr><td><code>code-review</code></td><td>Lista de cosas a revisar en un cambio contra la letra y las reglas del proyecto, con los hallazgos ordenados por gravedad.</td></tr>
+  <tr><td><code>assistant-evals</code></td><td>Cómo agregar un eval, cómo correrlos sin pasarse de la cuota y qué mirar cuando el asistente dice algo que no debería.</td></tr>
 </table>
-<h3>Cómo revisamos y validamos lo que generó</h3>
-<p>No aceptamos código solo porque compilaba. Cada tarea tenía que pasar <code>npm run check</code> (typecheck, lint y tests unitarios) y sus tests de integración antes del commit. Para cambios sensibles pedimos además una prueba de que el test fallaba sin el cambio, e hicimos mutaciones a mano para comprobar que los tests detectaban errores, por ejemplo filtrar el mensaje interno en un error 500. Los flujos de punta a punta los probamos en el navegador y desde un clone limpio con Docker, como lo haría alguien que corrige. Los dos integrantes recorrimos el código y las decisiones para poder explicarlos en la defensa.</p>
+<p>Para aceptar cada tarea, además de que pasaran el typecheck, el lint y los tests, revisábamos el código y lo probábamos. En algunos casos rompimos el código a propósito para ver si el test lo detectaba. Las decisiones que fueron apareciendo en el camino, como reemplazar exceljs o cambiar el orden de los modelos de voz, están anotadas en <code>docs/registro-de-implementacion.md</code>. Los dos integrantes recorrimos el código y las decisiones para poder explicarlos en la defensa.</p>
 </section>
 
 <!-- ============================================================ -->
 <section>
 <h2>12. Ejecución local</h2>
-<p>Hace falta Docker con Docker Compose v2 (Docker Desktop, OrbStack o colima) y una API key gratuita de Gemini, que se saca en <code>aistudio.google.com/apikey</code> sin tarjeta.</p>
+<p>Hace falta Docker con Docker Compose v2 (Docker Desktop, OrbStack o colima) y una API key gratuita de Gemini, que se saca en <code>aistudio.google.com/apikey</code> sin poner tarjeta.</p>
 <pre>git clone https://github.com/pipelussich/mercanova-ai-shopping.git
 cd mercanova-ai-shopping
 cp .env.example .env        # completar GEMINI_API_KEY
 docker compose up --build</pre>
-<p>La app queda en <code>http://localhost:3000</code>. El primer arranque construye la imagen, aplica las migraciones y carga el dataset y los embeddings, lo que lleva unos minutos. Para usar otro puerto alcanza con <code>APP_PORT=8080 docker compose up --build</code>, y para volver al estado inicial, con <code>docker compose down -v</code>. Sin API key la tienda funciona igual, sin el asistente ni la voz. Probamos este procedimiento desde un clone limpio del repositorio.</p>
-<p>Para desarrollo y para correr los tests, el <code>README.md</code> explica cómo levantar solo las bases y usar <code>npm run dev</code>, <code>npm run test:integration</code>, <code>npm run test:e2e</code> y <code>npm run evals</code>.</p>
+<p>La app queda en <code>http://localhost:3000</code>. La primera vez tarda unos minutos porque construye la imagen, crea las tablas y carga el dataset. Con <code>APP_PORT=8080 docker compose up --build</code> se cambia el puerto y con <code>docker compose down -v</code> se vuelve al estado inicial. Lo probamos clonando el repositorio en una carpeta vacía. En el <code>README.md</code> está cómo correr la app sin Docker y cómo correr cada tipo de test.</p>
 </section>
 
 <!-- ============================================================ -->
 <section>
 <h2>13. Limitaciones y trabajo futuro</h2>
-<p>Hay cosas que sabemos que no están resueltas y que en un producto real habría que atacar.</p>
-<ul>
-  <li>La cuota gratuita de Gemini es la principal limitación. Con varias personas usando el asistente a la vez se llega rápido al límite de pedidos por minuto. En producción habría que pasar a un plan pago y agregar caché de consultas frecuentes.</li>
-  <li>La búsqueda semántica siempre devuelve los productos más cercanos, aunque ninguno sea relevante. Cuando alguien pregunta por algo que la tienda no vende, el asistente lo aclara bien, pero igual aparecen tarjetas que no vienen al caso (figura 12). Un umbral mínimo de similitud o un reranking lo mejorarían.</li>
-  <li>No hay cuentas de usuario. El historial depende de una cookie, así que se pierde al borrarla o al cambiar de navegador.</li>
-  <li>El catálogo está en inglés y la interfaz en español. El asistente traduce al explicar, pero las fichas se muestran como vienen del dataset.</li>
-  <li>Las fotos son genéricas por categoría, no del producto real.</li>
-  <li>Quedaron algunos detalles menores identificados en la revisión final. El audio se lee completo antes de chequear el límite de 10 MB, el ícono de micrófono de los mensajes por voz se pierde al recargar, y el mensaje de "los precios cambiaron" también aparece cuando lo que cambió fue el contenido del carrito en otra pestaña.</li>
-  <li>Para pasar a producción faltan un pago real con una pasarela, autenticación, observabilidad (métricas del asistente, costo por conversación), límites de uso por persona y un panel para administrar el catálogo y el stock.</li>
-</ul>
+<p>Lo que más limita es la cuota gratuita de Gemini. Con dos o tres personas usando el asistente a la vez ya empiezan los reintentos. Para algo real habría que pasar a un plan pago y guardar en caché las consultas que se repiten.</p>
+<p>La búsqueda semántica siempre devuelve algo, aunque no venga al caso. Si alguien pregunta por un iPhone el asistente explica bien que no se vende, pero arriba aparecen tarjetas de tablets y discos (figura 12). Habría que poner un mínimo de parecido o reordenar los resultados con otro modelo.</p>
+<p>Sin cuentas de usuario, el historial depende de la cookie y se pierde al borrarla o al usar otro navegador. Las fichas siguen en inglés porque así vienen en el dataset, y las fotos son genéricas por categoría.</p>
+<p>En la última revisión quedaron anotados algunos detalles menores. El servidor lee el audio completo antes de controlar el tamaño máximo, el ícono de micrófono de un mensaje por voz desaparece al recargar, y el aviso de "los precios cambiaron" también aparece cuando lo que cambió fue el carrito desde otra pestaña.</p>
+<p>Para usarlo de verdad faltaría un medio de pago, login, alguna forma de medir cómo responde el asistente y cuánto cuesta, límites de uso por persona y un panel para cargar productos y stock.</p>
 </section>
 
 <!-- ============================================================ -->
@@ -552,19 +472,19 @@ docker compose up --build</pre>
   <tr><td>Repositorio</td><td>https://github.com/pipelussich/mercanova-ai-shopping (rama <code>main</code>)</td></tr>
   <tr><td>Video de demostración</td><td><span class="pending">link a completar</span></td></tr>
 </table>
-<p style="text-align:left">Dentro del repositorio, el diseño está en <code>docs/superpowers/specs/</code>, el plan en <code>docs/superpowers/plans/</code>, el registro de decisiones en <code>docs/registro-de-implementacion.md</code> y el checklist de la entrega con la evidencia de cada punto en <code>docs/checklist-entrega.md</code>.</p>
+<p style="text-align:left">En el repositorio también están el diseño (<code>docs/superpowers/specs/</code>), el plan (<code>docs/superpowers/plans/</code>), el registro de decisiones (<code>docs/registro-de-implementacion.md</code>) y el checklist de la entrega (<code>docs/checklist-entrega.md</code>).</p>
 </section>
 
 <!-- ============================================================ -->
-<section>
+<section style="break-inside:avoid">
 <h2>15. Uso de inteligencia artificial generativa</h2>
-<p>Cumpliendo con las pautas de la materia, detallamos qué herramientas de IA usamos y para qué.</p>
-<table>
-  <tr><th style="width:24%">Herramienta</th><th>Contexto de uso</th></tr>
-  <tr><td>Claude Code con Claude Opus 5.5 (Anthropic)</td><td>Definición del alcance a partir de la letra, documento de diseño, plan de implementación, generación del código y de los tests, revisión de código, redacción inicial de este documento y de la documentación del repositorio, y búsqueda y selección de las fotos con licencia libre.</td></tr>
-  <tr><td>Google Gemini (free tier)</td><td>Es parte del producto. Lo usa el asistente, la búsqueda semántica (embeddings) y la transcripción de voz. No lo usamos para producir el código ni el documento.</td></tr>
+<p>Según las pautas de la materia, estas son las herramientas de IA que usamos y para qué.</p>
+<table style="break-inside:avoid">
+  <tr><th style="width:24%">Herramienta</th><th>Para qué la usamos</th></tr>
+  <tr><td>Claude Code con Claude Opus 5.5 (Anthropic)</td><td>Escribir el código y los tests, armar el diseño y el plan a partir de la letra, revisar el código, hacer la redacción inicial de este documento y del README, y buscar las fotos con licencia libre.</td></tr>
+  <tr><td>Google Gemini (plan gratuito)</td><td>Es parte de la aplicación. Lo usan el asistente, la búsqueda semántica y la transcripción de voz.</td></tr>
 </table>
-<p>Revisamos todo lo que generó la IA. El código pasó por tests automatizados en cuatro niveles, verificación manual en el navegador y una revisión independiente, y el documento lo leímos y corregimos nosotros. Cualquier error que haya quedado es responsabilidad nuestra.</p>
+<p>Revisamos lo que generó la IA con los tests, probándolo en el navegador y leyéndolo, y corregimos este documento antes de entregarlo.</p>
 </section>
 
 <script>
