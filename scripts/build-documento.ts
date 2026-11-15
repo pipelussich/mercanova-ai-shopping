@@ -19,13 +19,13 @@ async function main() {
       path: out,
       format: "A4",
       printBackground: true,
+      preferCSSPageSize: true, // tamaño y márgenes salen del @page de cada HTML
       displayHeaderFooter: true,
       headerTemplate: "<span></span>",
       footerTemplate:
         '<div style="width:100%;font-size:8px;color:#888;padding:0 16mm;display:flex;justify-content:space-between">' +
         "<span>MercaNova · Sistemas de Soporte de Decisión</span>" +
         '<span><span class="pageNumber"></span> / <span class="totalPages"></span></span></div>',
-      margin: { top: "18mm", bottom: "18mm", left: "16mm", right: "16mm" },
     });
     console.log(`PDF generado: ${out}`);
   } finally {
