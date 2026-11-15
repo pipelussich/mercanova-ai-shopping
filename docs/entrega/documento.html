@@ -137,8 +137,9 @@ flowchart LR
   P --> PG["Páginas<br/>Server Components"]
   P --> API["Route handlers<br/>/api/cart · /api/orders<br/>/api/chat · /api/transcribe"]
   PG --> S
+  PG --> AI
   API --> S["Servicios<br/>catálogo · búsqueda · carrito<br/>órdenes · chat"]
-  API --> AI["Capa de IA<br/>agente · tools · provider<br/>embeddings · transcripción"]
+  API --> AI["Capa de IA<br/>agente · tools · provider<br/>búsqueda estructurada<br/>embeddings · transcripción"]
   AI --> S
   S --> D["Dominio<br/>reglas puras"]
   S --> DB[("PostgreSQL 17<br/>+ pgvector")]
@@ -150,7 +151,7 @@ flowchart LR
   <tr><th style="width:22%">Componente</th><th>Qué hace</th></tr>
   <tr><td><code>src/domain</code></td><td>Las reglas de negocio sin base de datos de por medio. Cálculos de plata en centavos, umbrales de stock, validación de cantidades y del checkout, y el reparto de unidades entre depósitos.</td></tr>
   <tr><td><code>src/server</code></td><td>Servicios que trabajan con PostgreSQL a través de Drizzle. Catálogo, búsqueda, carrito, órdenes, historial del chat e importación del dataset.</td></tr>
-  <tr><td><code>src/ai</code></td><td>Todo lo que habla con Gemini. Reintentos y modelo de respaldo, embeddings, transcripción, las herramientas del agente, el prompt y el agente.</td></tr>
+  <tr><td><code>src/ai</code></td><td>Todo lo que habla con Gemini. Reintentos y modelo de respaldo, embeddings, transcripción, la lectura de la búsqueda del catálogo, las herramientas del agente, el prompt y el agente.</td></tr>
   <tr><td><code>src/app</code></td><td>Pantallas y endpoints. Los endpoints validan lo que reciben con Zod, llaman a un servicio y devuelven el error en español si algo falla.</td></tr>
   <tr><td><code>src/proxy.ts</code></td><td>Crea la cookie de sesión en la primera visita, y con ella se asocian el carrito, las órdenes y el chat.</td></tr>
   <tr><td>PostgreSQL + pgvector</td><td>El catálogo importado, el stock, los carritos, las órdenes, las conversaciones y los vectores de la búsqueda.</td></tr>

@@ -1,6 +1,6 @@
 # Checklist previo a la entrega (§16 de la letra) — evidencia
 
-Estado al 2026-11-07. Cada ítem indica dónde está la prueba (test automatizado, comando o pantalla). PDF y video quedan fuera de esta etapa.
+Estado al 2026-11-15. Cada ítem indica dónde está la prueba (test automatizado, comando o pantalla).
 
 | Ítem de la letra | Estado | Evidencia |
 |---|---|---|
@@ -18,7 +18,7 @@ Estado al 2026-11-07. Cada ítem indica dónde está la prueba (test automatizad
 | Los tests definidos por el equipo pasan | ✅ | `npm run check` (typecheck + lint + unitarios) · `npm run test:integration` · `npm run test:e2e` · `npm run evals`. |
 | Docker y las variables de entorno están documentados | ✅ | `README.md`, `.env.example` (comentado), `docker-compose.yml`, `Dockerfile`. |
 | El repositorio contiene AGENTS.md y al menos dos Skills | ✅ | `AGENTS.md` (+ `CLAUDE.md` que lo importa) y `.claude/skills/{testing,code-review,assistant-evals}/SKILL.md`. |
-| El PDF contiene arquitectura, secuencias, decisiones, capturas, repositorios y video | ⏳ | Pendiente (etapa siguiente). |
+| El PDF contiene arquitectura, secuencias, decisiones, capturas, repositorios y video | ⏳ | `docs/entrega/MercaNova-documento-tecnico.pdf` completo; falta poner el grupo y el link del video en la portada y en la sección 14. |
 | Los links compartidos son accesibles por los docentes | ⏳ | Repo privado: invitar a los docentes como colaboradores al entregar (`gh repo edit` / Settings → Collaborators). |
 | El video muestra el flujo end-to-end en aproximadamente 5 minutos | ⏳ | Pendiente (etapa siguiente). |
 
@@ -27,7 +27,7 @@ Estado al 2026-11-07. Cada ítem indica dónde está la prueba (test automatizad
 | RF | Implementación | Prueba |
 |---|---|---|
 | RF-01 Catálogo | `src/app/page.tsx`, `src/server/catalog/*` | `catalog.test.ts` |
-| RF-02 Búsqueda en lenguaje natural | `src/server/search/search-service.ts` (pgvector + filtros + fallback) | `search.test.ts` |
+| RF-02 Búsqueda en lenguaje natural | `src/ai/query-understanding.ts` (structured output) + `src/server/search/search-service.ts` (pgvector + filtros + fallback) | `query-understanding.test.ts`, `search.test.ts`, `evals/query-understanding.eval.ts` |
 | RF-03 Asistente | `src/ai/agent.ts`, `src/components/assistant/*` | `agent.test.ts`, evals |
 | RF-04 Recomendaciones explicadas | prompt + `recommendedFor/keyFeatures/matchReasons` en `search_products` | eval `headphones-budget` |
 | RF-05 Aclaraciones | prompt | eval `ambiguous` |

@@ -37,7 +37,7 @@ El free tier no requiere tarjeta. **Sin key la tienda funciona igual** (catálog
 ## Qué incluye
 
 - **Catálogo** con filtros, detalle con stock por depósito, productos relacionados y **comparador** de hasta 4 productos.
-- **Búsqueda en lenguaje natural**: búsqueda semántica (embeddings `gemini-embedding-001` + pgvector) combinada con filtros estructurados, con respaldo por texto completo.
+- **Búsqueda en lenguaje natural**: Gemini pasa la búsqueda a filtros con structured output (categoría, marca, precio, stock y orden, validados con zod) y la necesidad se busca por similitud semántica (embeddings `gemini-embedding-001` + pgvector). La UI muestra lo que entendió y permite buscar el texto tal cual; sin IA hay respaldo por texto completo.
 - **Asistente conversacional** (panel lateral en todas las páginas): entiende la necesidad, pide aclaraciones si falta información, recomienda y explica, compara, consulta stock y órdenes y modifica el carrito si se lo pedís. Usa sólo datos actuales de la base: precios y stock se muestran en tarjetas generadas desde los resultados de las herramientas.
 - **Entrada por voz**: grabá tu consulta y se transcribe con Gemini.
 - **Carrito**, **checkout** (envío o retiro en local), **confirmación explícita**, **compra simulada** con orden `MN-ORD-AAAAMMDD-NNNN`, descuento transaccional de stock por depósito e **historial de órdenes**.
