@@ -18,7 +18,7 @@ export function ProductCard({ product, actions }: { product: ProductSummary; act
           src={productImageUrl(product)}
           alt={product.name}
           loading="lazy"
-          className="aspect-[4/3] w-full object-cover"
+          className="aspect-[4/3] w-full bg-white object-contain"
         />
       </Link>
       <CardContent className="flex flex-1 flex-col gap-2">

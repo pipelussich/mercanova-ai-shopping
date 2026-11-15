@@ -29,14 +29,12 @@ type MiniProduct = {
 function MiniProductCard({ p }: { p: MiniProduct }) {
   return (
     <div className="flex gap-3 rounded-lg border bg-background p-3 text-sm">
-      {p.category && (
-        // eslint-disable-next-line @next/next/no-img-element -- foto genérica de la categoría
-        <img
-          src={productImageUrl({ id: p.id, category: p.category, imageUrl: null })}
-          alt=""
-          className="size-16 shrink-0 rounded-md border object-cover"
-        />
-      )}
+      {/* eslint-disable-next-line @next/next/no-img-element -- foto del producto */}
+      <img
+        src={productImageUrl({ id: p.id, imageUrl: null })}
+        alt=""
+        className="size-16 shrink-0 rounded-md border bg-white object-contain"
+      />
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex items-start justify-between gap-2">
           <Link href={`/productos/${p.id}`} className="font-medium leading-snug hover:underline">

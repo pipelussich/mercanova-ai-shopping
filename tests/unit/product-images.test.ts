@@ -1,37 +1,32 @@
-import { describe, expect, it } from "vitest";
-import { existsSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { PRODUCT_PHOTOS, productImageUrl } from "@/domain/product-images";
+import { describe, expect, it } from "vitest";
+import { PRODUCT_PHOTO_IDS, productImageUrl } from "@/domain/product-images";
+
+const photo = (id: string) => path.resolve(__dirname, "../../public/products", `${id}.jpg`);
 
 describe("productImageUrl", () => {
-  it("usa una foto local de la categoría del producto", () => {
-    const url = productImageUrl({ id: "MN-HDP-0021", category: "Headphones", imageUrl: "https://placehold.co/x" });
-    expect(url).toMatch(/^\/products\/headphones-[1-3]\.jpg$/);
+  it("usa la foto propia del producto", () => {
+    const id = [...PRODUCT_PHOTO_IDS][0];
+    expect(productImageUrl({ id, imageUrl: "https://placehold.co/x" })).toBe(`/products/${id}.jpg`);
   });
 
-  it("es determinística: el mismo producto siempre muestra la misma foto", () => {
-    const p = { id: "MN-MON-0001", category: "Monitors", imageUrl: null };
-    expect(productImageUrl(p)).toBe(productImageUrl(p));
+  it("cae a la imagen del dataset si el producto no tiene foto", () => {
+    expect(productImageUrl({ id: "MN-XXX-9999", imageUrl: "https://placehold.co/y" })).toBe("https://placehold.co/y");
   });
 
-  it("reparte las fotos entre los productos de una categoría", () => {
-    const urls = new Set(
-      Array.from({ length: 30 }, (_, i) =>
-        productImageUrl({ id: `MN-MON-${String(i + 1).padStart(4, "0")}`, category: "Monitors", imageUrl: null }),
-      ),
-    );
-    expect(urls.size).toBe(3);
+  it("hay una foto para cada producto del catálogo", () => {
+    expect(PRODUCT_PHOTO_IDS.size).toBe(360);
+    for (const id of PRODUCT_PHOTO_IDS) expect(existsSync(photo(id)), id).toBe(true);
   });
 
-  it("cae a la imagen del dataset si la categoría no tiene fotos", () => {
-    expect(productImageUrl({ id: "X", category: "Drones", imageUrl: "https://placehold.co/y" })).toBe(
-      "https://placehold.co/y",
-    );
-  });
-
-  it("todas las fotos declaradas existen en public/products", () => {
-    for (const files of Object.values(PRODUCT_PHOTOS))
-      for (const f of files) expect(existsSync(path.resolve(__dirname, "../../public/products", f))).toBe(true);
-    expect(Object.keys(PRODUCT_PHOTOS)).toHaveLength(12);
+  it("no hay dos productos con la misma foto", () => {
+    const seen = new Map<string, string>();
+    for (const id of PRODUCT_PHOTO_IDS) {
+      const hash = createHash("md5").update(readFileSync(photo(id))).digest("hex");
+      expect(seen.get(hash), `${id} repite la foto de ${seen.get(hash)}`).toBeUndefined();
+      seen.set(hash, id);
+    }
   });
 });

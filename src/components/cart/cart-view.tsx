@@ -32,7 +32,7 @@ export function CartView() {
           <Card key={l.product.id}>
             <CardContent className="flex flex-wrap items-center gap-4">
               {/* eslint-disable-next-line @next/next/no-img-element -- placeholder externo */}
-              <img src={productImageUrl(l.product)} alt="" className="size-20 rounded-md border object-cover" />
+              <img src={productImageUrl(l.product)} alt="" className="size-20 rounded-md border bg-white object-contain" />
               <div className="flex min-w-48 flex-1 flex-col gap-1">
                 <Link href={`/productos/${l.product.id}`} className="font-medium hover:underline">
                   {l.product.name}

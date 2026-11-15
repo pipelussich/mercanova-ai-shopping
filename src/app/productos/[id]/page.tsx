@@ -42,7 +42,7 @@ function ProductDetailView({ product: p }: { product: ProductDetail }) {
 
       <div className="grid gap-8 lg:grid-cols-2">
         {/* eslint-disable-next-line @next/next/no-img-element -- imagen placeholder externa */}
-        <img src={productImageUrl(p)} alt={p.name} className="w-full rounded-xl border bg-muted object-cover" />
+        <img src={productImageUrl(p)} alt={p.name} className="w-full rounded-xl border bg-white object-contain" />
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
             <span>{categoryLabel(p.category)}</span>·<span>{p.subcategory}</span>·<span>{p.brand}</span>
