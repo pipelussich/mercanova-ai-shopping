@@ -105,7 +105,7 @@
 <table>
   <tr><th style="width:17%">Requerimiento</th><th>Cómo lo resolvimos</th><th style="width:22%">Dónde verlo</th></tr>
   <tr><td>RF-01 Catálogo</td><td>Listado paginado con filtros por categoría, marca, precio máximo, solo con stock y discontinuados. Cada producto tiene su ficha con especificaciones, stock por depósito y productos relacionados.</td><td><code>catalog.test.ts</code>, figuras 1 y 3</td></tr>
-  <tr><td>RF-02 Búsqueda</td><td>Búsqueda semántica con embeddings y pgvector, combinada con filtros. Sin IA disponible pasa a búsqueda de texto.</td><td><code>search.test.ts</code>, figura 2</td></tr>
+  <tr><td>RF-02 Búsqueda</td><td>Gemini pasa la búsqueda a filtros (categoría, marca, precio, stock y orden) y con eso se hace una búsqueda semántica con embeddings y pgvector. Sin IA disponible pasa a búsqueda de texto.</td><td><code>search.test.ts</code>, <code>query-understanding.test.ts</code>, figura 2</td></tr>
   <tr><td>RF-03 Asistente</td><td>Panel de chat disponible en todas las pantallas. Atrás hay un agente con diez herramientas.</td><td><code>agent.test.ts</code>, evals</td></tr>
   <tr><td>RF-04 Recomendaciones</td><td>Recomienda entre una y tres opciones y explica por qué, usando los usos recomendados, las características y las especificaciones.</td><td>eval <code>headphones-budget</code>, figura 5</td></tr>
   <tr><td>RF-05 Aclaraciones</td><td>Cuando falta el tipo de producto, el uso o el presupuesto, pregunta antes de buscar.</td><td>eval <code>ambiguous</code>, figura 10</td></tr>
@@ -163,6 +163,7 @@ flowchart LR
 <h2>4. Arquitectura de IA</h2>
 <h3>Qué hace el modelo</h3>
 <p>El modelo interpreta lo que la persona pide, decide qué herramientas usar y explica el resultado en español. Esto último pesa más de lo que parece, porque el catálogo está en inglés y las consultas llegan en español. Precios, stock y la compra los maneja la aplicación.</p>
+<p>Gemini aparece en dos lugares. Uno es el asistente del chat. El otro es la búsqueda del catálogo, donde no conversa y solo convierte lo que escribió la persona en un objeto con filtros.</p>
 <p>Usamos un solo agente con herramientas. En cada mensaje puede encadenar hasta seis pasos, por ejemplo buscar, pedir el detalle de dos productos y recién ahí responder.</p>
 
 <h3>Cómo accede a la información</h3>
@@ -187,7 +188,20 @@ flowchart LR
 <p>El asistente puede llevar a la persona hasta el checkout pero no tiene una herramienta para comprar. Lo probamos con un modelo simulado que intenta llamar a una herramienta de compra inventada, y no se crea ninguna orden.</p>
 <p>Las herramientas del carrito controlan el stock y, si algo falla, le devuelven al modelo el motivo para que lo explique. En el prompt le pedimos que las use solo cuando se lo piden, y cada cambio aparece en el chat con un botón para deshacerlo.</p>
 <p>Las tarjetas de producto, las tablas y el botón de checkout del chat se arman con lo que devolvió cada herramienta. Si el modelo escribiera mal un precio en su texto, la tarjeta igual mostraría el de la base. En el prompt además le pedimos copiar los montos tal cual y avisar cuando algo no está en el catálogo.</p>
-<p>Gemini gratis se satura seguido, así que cada llamada tiene reintentos, un modelo de respaldo y un tiempo máximo de 20 segundos para empezar a responder. Si nada funciona, el chat muestra un aviso y el resto de la tienda sigue andando.</p>
+<p>Gemini gratis se satura seguido, así que cada llamada tiene reintentos, un modelo de respaldo y un tiempo máximo de 20 segundos para empezar a responder. Si nada funciona, el chat muestra un aviso y el resto de la tienda sigue andando. Cada paso del agente deja una línea en el log del servidor con el modelo, las herramientas que llamó y los tokens, sin el texto de la persona.</p>
+
+<h3>Lo visto en el curso</h3>
+<table>
+  <tr><th style="width:22%">Concepto</th><th>Dónde está en MercaNova</th></tr>
+  <tr><td>Structured outputs</td><td>La búsqueda del catálogo le pide a Gemini un objeto con un schema de Zod (categoría, marca, precio mínimo y máximo, solo con stock, orden y un texto para la búsqueda semántica), con temperatura 0 y cuatro ejemplos en el prompt. Si lo que vuelve no valida, se busca con el texto tal cual. Las entradas de las diez herramientas también tienen su schema. <code>src/ai/query-understanding.ts</code></td></tr>
+  <tr><td>Retrieval / RAG</td><td><code>search_products</code> trae de pgvector los productos más parecidos, ya filtrados, y el modelo arma la respuesta con eso. Las tarjetas se dibujan con lo recuperado y no con el texto del modelo.</td></tr>
+  <tr><td>Tools / function calling</td><td>Diez herramientas que llaman a los mismos servicios que la tienda. Cada una puede hacer solo lo suyo y ninguna compra.</td></tr>
+  <tr><td>Agents</td><td>Un agente que decide qué herramienta usar y repite hasta responder, con un tope de seis pasos. La compra la confirma la persona en la pantalla de checkout.</td></tr>
+  <tr><td>State</td><td>El historial queda en <code>chat_messages</code> por sesión. El carrito y las órdenes no se copian al contexto, el agente los pide con herramientas cuando los necesita.</td></tr>
+  <tr><td>Skills</td><td>Tres skills y un <code>AGENTS.md</code> para el coding agent con el que hicimos el proyecto (sección 11).</td></tr>
+  <tr><td>Testing</td><td>Tests con un modelo simulado para los casos de error y evals con Gemini real para el asistente y para la búsqueda (sección 10).</td></tr>
+</table>
+<p>MCP no lo usamos. Las herramientas las usa solo este agente y viven en la misma aplicación.</p>
 </section>
 
 <!-- ============================================================ -->
@@ -285,12 +299,12 @@ sequenceDiagram
 </div>
 
 <div class="decision">
-<h3>6.4 Búsqueda con embeddings</h3>
+<h3>6.4 Búsqueda en lenguaje natural</h3>
 <p><b>Problema.</b> RF-02 pide encontrar productos describiendo la necesidad, y en nuestro caso las consultas llegan en español sobre un catálogo en inglés.</p>
-<p><b>Alternativas.</b> Que el modelo traduzca la consulta a filtros. Búsqueda de texto completo. Embeddings combinados con filtros.</p>
-<p><b>Decisión.</b> Embeddings en pgvector junto con filtros SQL de precio, categoría y stock, y búsqueda de texto como respaldo.</p>
-<p><b>Justificación.</b> La búsqueda de texto no relaciona "wifi de mi casa" con "Wi-Fi 6E mesh router", y los filtros son justamente lo que la letra pide superar. Generar los 360 embeddings nos llevó unos ocho minutos por el límite del plan gratuito, que para esto es de 100 textos por minuto. Por eso quedaron guardados en el repositorio y el que levanta la app no tiene que esperar ni gastar cuota.</p>
-<p><b>Trade-offs.</b> La búsqueda siempre devuelve los productos más parecidos, aunque ninguno sirva. Se ve en la sección 13.</p>
+<p><b>Alternativas.</b> Búsqueda de texto completo. Embeddings combinados con filtros. Que el modelo traduzca la consulta a filtros.</p>
+<p><b>Decisión.</b> Las dos últimas juntas. Gemini lee la búsqueda y devuelve un objeto validado con Zod con la categoría, la marca, el rango de precios, si tiene que haber stock, el orden y una descripción en inglés de lo que se busca. Esa descripción va a pgvector y lo demás se aplica como filtros SQL. Si Gemini no responde, se busca con el texto tal cual, y si tampoco hay embeddings queda la búsqueda de texto.</p>
+<p><b>Justificación.</b> Al principio teníamos solo embeddings. "Algo para mejorar el wifi de mi casa" encontraba routers, pero en "notebook liviana para la facu hasta 900 dólares" el "hasta 900" no se aplicaba y aparecían veinte productos mezclados, algunos más caros. Con el objeto estructurado salen solo las cuatro notebooks que entran en el presupuesto, y arriba se muestra lo que se entendió con un link para buscar el texto sin interpretar (figura 2). La marca que devuelve el modelo se controla contra las del catálogo, así una marca inventada no deja la búsqueda vacía. Para probarlo armamos seis búsquedas con Gemini real y las seis devolvieron los campos esperados. Los 360 embeddings del catálogo nos llevaron unos ocho minutos por el límite del plan gratuito y quedaron guardados en el repositorio.</p>
+<p><b>Trade-offs.</b> Cada búsqueda nueva usa un pedido más de la cuota y tarda entre un segundo y medio y dos segundos más. Las búsquedas repetidas se guardan en memoria y si el modelo tarda más de seis segundos se busca sin interpretar.</p>
 </div>
 
 <h3>Otras decisiones</h3>
@@ -336,7 +350,7 @@ erDiagram
   <tr><td><code>orders</code>, <code>order_items</code>, <code>order_allocations</code></td><td>La orden con los datos de entrega y el total, cada ítem con el nombre y precio de ese momento, y de qué depósito salió cada unidad.</td></tr>
   <tr><td><code>chat_messages</code></td><td>Los mensajes de cada conversación, incluidos los resultados de las herramientas.</td></tr>
 </table>
-<p>Al dataset le agregamos una sola cosa. Las imágenes que trae son de relleno, entonces le pusimos a cada categoría fotos genéricas con licencia Creative Commons que buscamos en Openverse. En <code>public/products/CREDITOS.md</code> está el autor y la licencia de cada una.</p>
+<p>Al dataset le agregamos una sola cosa. Las imágenes que trae son de relleno, entonces a cada uno de los 360 productos le pusimos una foto distinta de un producto real parecido, sacada de una búsqueda de imágenes con su descripción. En <code>public/products/CREDITOS.md</code> está de dónde salió cada una y un test controla que no haya dos iguales.</p>
 </section>
 
 <!-- ============================================================ -->
@@ -345,9 +359,9 @@ erDiagram
 <p>La hicimos con React, Tailwind y componentes de shadcn/ui, todo en español. El asistente es un panel que se abre al costado desde cualquier pantalla, y desde las tarjetas del chat se puede agregar al carrito, comparar o abrir el producto.</p>
 <div class="grid2">
   <figure><img src="img/01-catalogo.jpeg" /><figcaption>Figura 1. Catálogo filtrado por categoría, precio y stock.</figcaption></figure>
-  <figure><img src="img/02-busqueda-natural.jpeg" /><figcaption>Figura 2. Búsqueda en lenguaje natural. "Algo para mejorar el wifi de mi casa" devuelve routers.</figcaption></figure>
+  <figure><img src="img/02-busqueda-natural.jpeg" /><figcaption>Figura 2. Búsqueda en lenguaje natural. Gemini entendió la categoría y el presupuesto y los aplicó como filtros.</figcaption></figure>
 </div>
-<figure><img src="img/03-detalle.jpeg" style="max-height:120mm" /><figcaption>Figura 3. Ficha de producto con stock por depósito, especificaciones y relacionados.</figcaption></figure>
+<figure><img src="img/03-detalle.jpeg" style="max-height:120mm" /><figcaption>Figura 3. Ficha de producto con especificaciones y stock por depósito.</figcaption></figure>
 <figure><img src="img/04-comparador.jpeg" /><figcaption>Figura 4. Comparador. Las filas resaltadas son las que cambian entre productos.</figcaption></figure>
 <p>Las capturas del asistente están recortadas al panel para que se lean.</p>
 <div class="grid3">
@@ -400,16 +414,16 @@ erDiagram
 <h2>10. Testing</h2>
 <table>
   <tr><th style="width:18%">Nivel</th><th>Qué prueba</th><th style="width:16%">Resultado</th></tr>
-  <tr><td>Unitarios (Vitest)</td><td>Cálculos de plata, umbrales de stock, validación de cantidades y del checkout, reparto entre depósitos, el lector del Excel, reintentos y modelo de respaldo, errores de la API, conversión a WAV y otros detalles chicos.</td><td>58 de 58</td></tr>
+  <tr><td>Unitarios (Vitest)</td><td>Cálculos de plata, umbrales de stock, validación de cantidades y del checkout, reparto entre depósitos, el lector del Excel, reintentos y modelo de respaldo, la búsqueda estructurada con un modelo simulado (objeto válido, objeto fuera del schema y modelo colgado), que no haya fotos repetidas, errores de la API, conversión a WAV y otros detalles chicos.</td><td>63 de 63</td></tr>
   <tr><td>Integración (Vitest y PostgreSQL)</td><td>Importación del dataset, catálogo, búsqueda, carrito, compra (con concurrencia, doble confirmación, cambio de precio y retiro sin stock), historial, las diez herramientas, el agente con un modelo simulado y la transcripción.</td><td>72 de 72</td></tr>
   <tr><td>E2E (Playwright)</td><td>Una compra entera sobre el build de producción que al final controla que bajó el stock, el intento de pasarse del stock, un producto discontinuado y el asistente sin API key.</td><td>4 de 4</td></tr>
-  <tr><td>Evals (Gemini real)</td><td>Siete conversaciones. Recomendación con presupuesto, pedido vago, producto que no existe, producto sin stock, comparación en dos mensajes, pedido de compra directa y pregunta que no tiene nada que ver.</td><td>7 de 7</td></tr>
+  <tr><td>Evals (Gemini real)</td><td>Siete conversaciones. Recomendación con presupuesto, pedido vago, producto que no existe, producto sin stock, comparación en dos mensajes, pedido de compra directa y pregunta que no tiene nada que ver. Aparte, seis búsquedas del catálogo para controlar el objeto estructurado.</td><td>7 de 7 y 6 de 6</td></tr>
 </table>
 <p>Los de integración y E2E corren contra una base aparte que se carga con el dataset completo antes de empezar. Al modelo lo simulamos únicamente en los tests del agente, para poder probar cosas como que esté saturado o no conteste.</p>
 <p>Varios de los arreglos que hicimos salieron de estos tests. El E2E nos mostró que, después del error de stock, el campo de cantidad se quedaba con el número inválido. Un test de integración encontró lo del doble click que contamos en 6.3. Y con los evals apareció lo del mouse más barato (6.2).</p>
 <pre>$ npm run check            # typecheck + lint + unitarios
- Test Files  14 passed (14)
-      Tests  58 passed (58)
+ Test Files  15 passed (15)
+      Tests  63 passed (63)
 
 $ npm run test:integration
  Test Files  9 passed (9)
@@ -423,7 +437,8 @@ $ npm run test:e2e
   4 passed
 
 $ npm run evals            # Gemini real
- Resultado: 7/7 casos OK  (reporte completo en evals/last-report.md)</pre>
+ Resultado: 7/7 casos OK  (reporte completo en evals/last-report.md)
+ Búsqueda estructurada: 6/6 OK  (evals/last-report-busqueda.md)</pre>
 <p>Las salidas completas están en <code>docs/entrega/evidencia/</code>, y en <code>evals/last-report.md</code> se puede ver cada conversación de los evals con las herramientas que usó el agente.</p>
 </section>
 
@@ -458,10 +473,10 @@ docker compose up --build</pre>
 <section>
 <h2>13. Limitaciones y trabajo futuro</h2>
 <p>Lo que más limita es la cuota gratuita de Gemini. Con dos o tres personas usando el asistente a la vez ya empiezan los reintentos. Para algo real habría que pasar a un plan pago y guardar en caché las consultas que se repiten.</p>
-<p>La búsqueda semántica siempre devuelve algo, aunque no venga al caso. Si alguien pregunta por un iPhone el asistente explica bien que no se vende, pero arriba aparecen tarjetas de tablets y discos (figura 12). Habría que poner un mínimo de parecido o reordenar los resultados con otro modelo.</p>
-<p>Sin cuentas de usuario, el historial depende de la cookie y se pierde al borrarla o al usar otro navegador. Las fichas siguen en inglés porque así vienen en el dataset, y las fotos son genéricas por categoría.</p>
+<p>La búsqueda semántica siempre devuelve algo, aunque no venga al caso. Cuando el asistente busca algo que la tienda no vende, explica bien que no está, pero arriba aparecen tarjetas que no vienen al caso. Habría que poner un mínimo de parecido o reordenar los resultados con otro modelo.</p>
+<p>Sin cuentas de usuario, el historial depende de la cookie y se pierde al borrarla o al usar otro navegador. Las fichas siguen en inglés porque así vienen en el dataset, y las fotos son de productos reales parecidos y no del producto exacto.</p>
 <p>En la última revisión quedaron anotados algunos detalles menores. El servidor lee el audio completo antes de controlar el tamaño máximo, el ícono de micrófono de un mensaje por voz desaparece al recargar, y el aviso de "los precios cambiaron" también aparece cuando lo que cambió fue el carrito desde otra pestaña.</p>
-<p>Para usarlo de verdad faltaría un medio de pago, login, alguna forma de medir cómo responde el asistente y cuánto cuesta, límites de uso por persona y un panel para cargar productos y stock.</p>
+<p>Para usarlo de verdad faltaría un medio de pago, login, un tablero que junte lo que hoy queda en el log de cada paso del asistente, límites de uso por persona y un panel para cargar productos y stock.</p>
 </section>
 
 <!-- ============================================================ -->
@@ -481,7 +496,7 @@ docker compose up --build</pre>
 <p>Según las pautas de la materia, estas son las herramientas de IA que usamos y para qué.</p>
 <table style="break-inside:avoid">
   <tr><th style="width:24%">Herramienta</th><th>Para qué la usamos</th></tr>
-  <tr><td>Claude Code con Claude Opus 5.5 (Anthropic)</td><td>Escribir el código y los tests, armar el diseño y el plan a partir de la letra, revisar el código, hacer la redacción inicial de este documento y del README, y buscar las fotos con licencia libre.</td></tr>
+  <tr><td>Claude Code con Claude Opus 5.5 (Anthropic)</td><td>Escribir el código y los tests, armar el diseño y el plan a partir de la letra, revisar el código, hacer la redacción inicial de este documento y del README, y buscar las fotos de los productos.</td></tr>
   <tr><td>Google Gemini (plan gratuito)</td><td>Es parte de la aplicación. Lo usan el asistente, la búsqueda semántica y la transcripción de voz.</td></tr>
 </table>
 <p>Revisamos lo que generó la IA con los tests, probándolo en el navegador y leyéndolo, y corregimos este documento antes de entregarlo.</p>
