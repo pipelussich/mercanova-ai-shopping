@@ -4,9 +4,9 @@
 <meta charset="utf-8" />
 <title>MercaNova · Resumen para la defensa</title>
 <style>
-  @page { size: A4; margin: 14mm 15mm; }
+  @page { size: A4; margin: 12mm 15mm; }
   :root { --ink: #1c1c1c; --muted: #5f6368; --line: #d9d9d9; --accent: #1f3a5f; --soft: #f4f6f8; }
-  body { font-family: "Helvetica Neue", Arial, sans-serif; color: var(--ink); font-size: 9.6pt; line-height: 1.42; margin: 0; }
+  body { font-family: "Helvetica Neue", Arial, sans-serif; color: var(--ink); font-size: 9.5pt; line-height: 1.38; margin: 0; }
   h1 { color: var(--accent); font-size: 16pt; margin: 0 0 1mm; }
   .sub { color: var(--muted); margin: 0 0 3mm; }
   h2 { color: var(--accent); font-size: 11.5pt; margin: 4mm 0 1.5mm; padding-bottom: 0.8mm; border-bottom: 1px solid var(--line); break-after: avoid; }
@@ -45,8 +45,7 @@
 <h2>Dónde usamos la IA</h2>
 <ul>
   <li><b>Asistente.</b> Un agente con diez herramientas (buscar, ver detalle, comparar, relacionados, carrito, órdenes y proponer checkout). Decide qué herramienta usar y puede encadenar hasta seis pasos antes de responder.</li>
-  <li><b>Búsqueda del catálogo.</b> Gemini lee lo que escribió la persona y devuelve un objeto con filtros (categoría, marca, precios, stock y orden). La pantalla muestra lo que entendió.</li>
-  <li><b>Búsqueda semántica.</b> Cada producto tiene un embedding guardado en pgvector. Así "algo para el wifi de mi casa" encuentra routers aunque el catálogo esté en inglés.</li>
+  <li><b>Búsqueda del catálogo.</b> Gemini pasa lo que escribió la persona a filtros y después se busca por embeddings (ver más abajo). Una búsqueda nueva tarda unos dos segundos.</li>
   <li><b>Voz.</b> El navegador graba, el audio se transcribe con Gemini y se manda como un mensaje más.</li>
 </ul>
 
@@ -61,12 +60,22 @@
   <tr><td>6. Agents robustos y MCP</td><td>Reintentos, modelo de respaldo, tiempo máximo de 20 segundos para empezar a responder, log por paso con tokens y herramientas, y evals. MCP no lo usamos porque las herramientas viven en la misma app.</td></tr>
 </table>
 
+<h2>Embeddings y RAG, para explicarlo</h2>
+<p>Un embedding es una lista de números que representa el significado de un texto. Textos que dicen cosas parecidas quedan con números parecidos, aunque usen otras palabras o estén en otro idioma. No es un requisito de la letra. La letra pide en RF-02 encontrar productos "sin depender únicamente de filtros rígidos" y en el punto 7 aplicar Retrieval/RAG "cuando corresponda". Los embeddings son cómo lo resolvimos, con lo de la clase 2.</p>
+<ul>
+  <li><b>Indexación, una sola vez.</b> A cada producto le armamos un texto con nombre, marca, descripción, usos y especificaciones, y <code>gemini-embedding-001</code> lo convierte en un vector de 768 números que se guarda en pgvector. Los 360 vectores quedaron en el repo para no gastar cuota al levantar la app.</li>
+  <li><b>Consulta, cada vez.</b> Gemini pasa la búsqueda a un JSON con filtros (como el ProductRequirements de la demo de clase), se calcula el embedding de la necesidad y pgvector devuelve los productos más cercanos por similitud coseno, filtrados por precio, categoría y stock en la misma consulta SQL.</li>
+  <li><b>Grounding.</b> El asistente responde con lo recuperado y las tarjetas se dibujan con esos datos.</li>
+  <li><b>Chunking.</b> No partimos los productos porque cada uno es un texto corto, así que alcanza con un embedding por producto.</li>
+  <li><b>Por qué no solo palabras clave.</b> "Algo para mejorar el wifi de mi casa" no comparte palabras con "Wi-Fi 6E mesh router" y aun así lo encuentra. La búsqueda por palabras queda de respaldo si no hay key o Gemini falla.</li>
+  <li><b>Limitación.</b> Siempre devuelve lo más parecido aunque nada sirva. Faltaría un umbral mínimo de parecido.</li>
+</ul>
+
 <h2>Decisiones para tener a mano</h2>
 <ul>
   <li><b>Gemini gratis.</b> La letra no pedía pagar y Gemini tiene chat, embeddings y audio. Usamos la Interactions API porque el endpoint clásico daba 404 con keys nuevas. El costo es la cuota baja, que se amortigua con reintentos y el modelo de respaldo.</li>
   <li><b>Que no invente datos.</b> Las tarjetas, tablas y botones del chat salen de lo que devuelven las herramientas, y el texto del modelo solo explica. Los evals controlan que cada monto que nombra exista en la base.</li>
   <li><b>Compra segura.</b> Una transacción que bloquea carrito y stock con <code>SELECT ... FOR UPDATE</code>, vuelve a controlar precio y stock y recién ahí descuenta. Una clave por intento evita órdenes dobles con un doble click.</li>
-  <li><b>Búsqueda.</b> Filtros estructurados más embeddings, con búsqueda de texto como respaldo. Una búsqueda nueva tarda unos dos segundos.</li>
   <li><b>Una sola app Next.js y una sola base.</b> Menos piezas para levantar en Docker, tipos compartidos, y la búsqueda por similitud y los filtros van en la misma consulta.</li>
 </ul>
 
