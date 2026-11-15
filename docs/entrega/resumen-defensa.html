@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>MercaNova · Resumen para la defensa</title>
+<style>
+  @page { size: A4; margin: 14mm 15mm; }
+  :root { --ink: #1c1c1c; --muted: #5f6368; --line: #d9d9d9; --accent: #1f3a5f; --soft: #f4f6f8; }
+  body { font-family: "Helvetica Neue", Arial, sans-serif; color: var(--ink); font-size: 9.6pt; line-height: 1.42; margin: 0; }
+  h1 { color: var(--accent); font-size: 16pt; margin: 0 0 1mm; }
+  .sub { color: var(--muted); margin: 0 0 3mm; }
+  h2 { color: var(--accent); font-size: 11.5pt; margin: 4mm 0 1.5mm; padding-bottom: 0.8mm; border-bottom: 1px solid var(--line); break-after: avoid; }
+  p { margin: 0 0 2mm; }
+  ul { margin: 0 0 2mm; padding-left: 5mm; }
+  li { margin-bottom: 0.8mm; }
+  code { font-family: Menlo, Consolas, monospace; font-size: 8.4pt; background: var(--soft); padding: 0 0.8mm; border-radius: 1mm; }
+  table { width: 100%; border-collapse: collapse; margin: 1mm 0 2.5mm; font-size: 8.8pt; }
+  th, td { border: 1px solid var(--line); padding: 1mm 1.6mm; vertical-align: top; text-align: left; }
+  th { background: var(--soft); }
+  tr { break-inside: avoid; }
+  .qa p { margin-bottom: 1.4mm; }
+  .qa b { color: var(--accent); }
+</style>
+</head>
+<body data-ready="1">
+
+<h1>MercaNova · resumen para la defensa</h1>
+<p class="sub">Sistemas de Soporte de Decisión · Grupo N8B · Felipe Lussich (280738) y Mateo Falco (283972)</p>
+
+<h2>Qué hicimos</h2>
+<p>Una tienda online de tecnología con un asistente de compras con IA. La persona escribe o dicta lo que necesita, el asistente busca en el catálogo, recomienda entre una y tres opciones explicando por qué, compara, pregunta si le falta información y arma el carrito si se lo piden. La compra es simulada y termina en una orden que descuenta el stock de cada depósito. El asistente nunca compra, lleva a la persona hasta el checkout y la confirmación la hace ella.</p>
+<p>Todo corre con <code>docker compose up --build</code>. Sin API key la tienda anda igual, sin asistente ni voz y con búsqueda por palabras clave.</p>
+
+<h2>Tecnologías</h2>
+<table>
+  <tr><th style="width:24%">Parte</th><th>Qué usamos</th></tr>
+  <tr><td>App (front y back)</td><td>Next.js 16 con React 19 y TypeScript, Tailwind y componentes shadcn/ui. Una sola aplicación con pantallas y endpoints.</td></tr>
+  <tr><td>Base de datos</td><td>PostgreSQL 17 con pgvector para los embeddings, y Drizzle como ORM. Validación de datos con Zod.</td></tr>
+  <tr><td>IA</td><td>Google Gemini en el plan gratis, a través del Vercel AI SDK. Chat <code>gemini-3.5-flash-lite</code> con respaldo <code>gemini-3.1-flash-lite</code>, embeddings <code>gemini-embedding-001</code>.</td></tr>
+  <tr><td>Tests</td><td>Vitest para unitarios e integración, Playwright para E2E y evals propios con Gemini real.</td></tr>
+  <tr><td>Infra</td><td>Docker Compose con la app y la base. Las claves van en <code>.env</code> y hay un <code>.env.example</code>.</td></tr>
+</table>
+<p>El código está en capas. <code>domain</code> tiene las reglas puras (plata en centavos, stock, checkout), <code>server</code> los servicios contra la base, <code>ai</code> todo lo de Gemini y <code>app</code> las pantallas y endpoints. No hay login, cada visitante tiene una cookie de sesión anónima.</p>
+
+<h2>Dónde usamos la IA</h2>
+<ul>
+  <li><b>Asistente.</b> Un agente con diez herramientas (buscar, ver detalle, comparar, relacionados, carrito, órdenes y proponer checkout). Decide qué herramienta usar y puede encadenar hasta seis pasos antes de responder.</li>
+  <li><b>Búsqueda del catálogo.</b> Gemini lee lo que escribió la persona y devuelve un objeto con filtros (categoría, marca, precios, stock y orden). La pantalla muestra lo que entendió.</li>
+  <li><b>Búsqueda semántica.</b> Cada producto tiene un embedding guardado en pgvector. Así "algo para el wifi de mi casa" encuentra routers aunque el catálogo esté en inglés.</li>
+  <li><b>Voz.</b> El navegador graba, el audio se transcribe con Gemini y se manda como un mensaje más.</li>
+</ul>
+
+<h2>Lo de las clases y dónde está</h2>
+<table>
+  <tr><th style="width:26%">Clase / concepto</th><th>En MercaNova</th></tr>
+  <tr><td>1. LLMs en aplicaciones, structured outputs</td><td>La búsqueda pide a Gemini un objeto con schema de Zod, temperatura 0 y ejemplos en el prompt (few-shot). Si no valida, se busca con el texto tal cual. El prompt del asistente tiene reglas de idioma, datos y compra.</td></tr>
+  <tr><td>2. RAG</td><td>Embeddings en pgvector más filtros SQL. El modelo responde con lo que recuperó la búsqueda y las tarjetas se dibujan con esos datos (grounding).</td></tr>
+  <tr><td>3. Tools / function calling</td><td>Diez herramientas con su schema. Llaman a los mismos servicios que la tienda, así precio y stock siempre salen de la base. No existe herramienta para comprar.</td></tr>
+  <tr><td>4. Coding agents y skills</td><td>Hicimos el proyecto con Claude Code. En el repo hay un <code>AGENTS.md</code> con las reglas y tres skills (testing, code-review y assistant-evals).</td></tr>
+  <tr><td>5. Agents</td><td>Un solo agente con loop de herramientas y tope de seis pasos. La compra queda del lado de la persona (human in the loop). El estado de la conversación se guarda en la base por sesión.</td></tr>
+  <tr><td>6. Agents robustos y MCP</td><td>Reintentos, modelo de respaldo, tiempo máximo de 20 segundos para empezar a responder, log por paso con tokens y herramientas, y evals. MCP no lo usamos porque las herramientas viven en la misma app.</td></tr>
+</table>
+
+<h2>Decisiones para tener a mano</h2>
+<ul>
+  <li><b>Gemini gratis.</b> La letra no pedía pagar y Gemini tiene chat, embeddings y audio. Usamos la Interactions API porque el endpoint clásico daba 404 con keys nuevas. El costo es la cuota baja, que se amortigua con reintentos y el modelo de respaldo.</li>
+  <li><b>Que no invente datos.</b> Las tarjetas, tablas y botones del chat salen de lo que devuelven las herramientas, y el texto del modelo solo explica. Los evals controlan que cada monto que nombra exista en la base.</li>
+  <li><b>Compra segura.</b> Una transacción que bloquea carrito y stock con <code>SELECT ... FOR UPDATE</code>, vuelve a controlar precio y stock y recién ahí descuenta. Una clave por intento evita órdenes dobles con un doble click.</li>
+  <li><b>Búsqueda.</b> Filtros estructurados más embeddings, con búsqueda de texto como respaldo. Una búsqueda nueva tarda unos dos segundos.</li>
+  <li><b>Una sola app Next.js y una sola base.</b> Menos piezas para levantar en Docker, tipos compartidos, y la búsqueda por similitud y los filtros van en la misma consulta.</li>
+</ul>
+
+<h2>Testing</h2>
+<p>Cuatro niveles. 59 tests unitarios (reglas de negocio, reintentos, búsqueda estructurada con modelo simulado), 72 de integración contra PostgreSQL real (compras concurrentes, doble click, herramientas, agente con modelo simulado), 4 E2E con Playwright (compra completa con stock descontado) y evals con Gemini real (7 conversaciones del asistente y 6 búsquedas). Todo en verde.</p>
+
+<h2>Preguntas que pueden caer</h2>
+<div class="qa">
+<p><b>¿Por qué un solo agente y no varios?</b> Con diez herramientas alcanzaba y es más fácil de controlar y probar. Multi-agent está fuera de alcance en la letra.</p>
+<p><b>¿Cómo sabés que no inventa precios?</b> Lo que se ve en tarjetas y tablas viene de la base, y los evals comparan cada monto del texto contra la base.</p>
+<p><b>¿Qué pasa si Gemini se cae?</b> Reintenta, pasa al modelo de respaldo y si no hay caso muestra un aviso. Carrito, checkout y órdenes siguen andando.</p>
+<p><b>¿Qué pasa si dos personas compran la última unidad?</b> La transacción bloquea el stock, una compra se confirma y la otra recibe "No hay stock suficiente".</p>
+<p><b>¿Cómo revisaron lo que generó el coding agent?</b> Cada tarea arrancaba con un test que fallaba, había que pasar typecheck, lint y tests, lo probábamos en el navegador y al final otro agente sin contexto revisó todo contra la letra.</p>
+<p><b>¿Qué mejorarían para producción?</b> Plan pago de IA, login, pagos reales, un umbral mínimo de parecido en la búsqueda y un tablero con lo que hoy queda en el log.</p>
+</div>
+
+</body>
+</html>

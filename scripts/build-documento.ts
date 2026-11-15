@@ -1,15 +1,15 @@
 /**
  * Genera docs/entrega/MercaNova-documento-tecnico.pdf a partir de docs/entrega/documento.html
  * (renderiza los diagramas Mermaid en Chromium y numera las páginas).
- * Uso: npx tsx scripts/build-documento.ts
+ * Uso: npx tsx scripts/build-documento.ts [entrada.html] [salida.pdf]
  */
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { chromium } from "@playwright/test";
 
 async function main() {
-  const html = path.resolve("docs/entrega/documento.html");
-  const out = path.resolve("docs/entrega/MercaNova-documento-tecnico.pdf");
+  const html = path.resolve(process.argv[2] ?? "docs/entrega/documento.html");
+  const out = path.resolve(process.argv[3] ?? "docs/entrega/MercaNova-documento-tecnico.pdf");
   const browser = await chromium.launch();
   try {
     const page = await browser.newPage();
