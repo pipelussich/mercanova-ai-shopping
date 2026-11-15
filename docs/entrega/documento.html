@@ -61,7 +61,7 @@
     <tr><td><b>Materia</b></td><td>Sistemas de Soporte de Decisión</td></tr>
     <tr><td><b>Carrera</b></td><td>Licenciatura en Sistemas</td></tr>
     <tr><td><b>Grupo</b></td><td><span class="pending">N8A / N8B (a completar)</span></td></tr>
-    <tr><td><b>Integrantes</b></td><td>Felipe Lussich (<span class="pending">nº de estudiante</span>)<br />Mateo Falco (283972)</td></tr>
+    <tr><td><b>Integrantes</b></td><td>Felipe Lussich (280738)<br />Mateo Falco (283972)</td></tr>
     <tr><td><b>Fecha</b></td><td>Diciembre de 2026</td></tr>
     <tr><td><b>Repositorio</b></td><td>https://github.com/pipelussich/mercanova-ai-shopping</td></tr>
     <tr><td><b>Video</b></td><td><span class="pending">link al video (a completar)</span></td></tr>
@@ -304,7 +304,7 @@ sequenceDiagram
 <p><b>Alternativas.</b> Búsqueda de texto completo. Embeddings combinados con filtros. Que el modelo traduzca la consulta a filtros.</p>
 <p><b>Decisión.</b> Las dos últimas juntas. Gemini lee la búsqueda y devuelve un objeto validado con Zod con la categoría, la marca, el rango de precios, si tiene que haber stock, el orden y una descripción en inglés de lo que se busca. Esa descripción va a pgvector y lo demás se aplica como filtros SQL. Si Gemini no responde, se busca con el texto tal cual, y si tampoco hay embeddings queda la búsqueda de texto.</p>
 <p><b>Justificación.</b> Al principio teníamos solo embeddings. "Algo para mejorar el wifi de mi casa" encontraba routers, pero en "notebook liviana para la facu hasta 900 dólares" el "hasta 900" no se aplicaba y aparecían veinte productos mezclados, algunos más caros. Con el objeto estructurado salen solo las cuatro notebooks que entran en el presupuesto, y arriba se muestra lo que se entendió con un link para buscar el texto sin interpretar (figura 2). La marca que devuelve el modelo se controla contra las del catálogo, así una marca inventada no deja la búsqueda vacía. Para probarlo armamos seis búsquedas con Gemini real y las seis devolvieron los campos esperados. Los 360 embeddings del catálogo nos llevaron unos ocho minutos por el límite del plan gratuito y quedaron guardados en el repositorio.</p>
-<p><b>Trade-offs.</b> Cada búsqueda nueva usa un pedido más de la cuota y tarda entre un segundo y medio y dos segundos más. Las búsquedas repetidas se guardan en memoria y si el modelo tarda más de seis segundos se busca sin interpretar.</p>
+<p><b>Trade-offs.</b> Cada búsqueda nueva usa un pedido de la cuota y tarda unos dos segundos. Las búsquedas repetidas se guardan en memoria y si el modelo tarda más de seis segundos se busca sin interpretar.</p>
 </div>
 
 <h3>Otras decisiones</h3>
@@ -350,7 +350,6 @@ erDiagram
   <tr><td><code>orders</code>, <code>order_items</code>, <code>order_allocations</code></td><td>La orden con los datos de entrega y el total, cada ítem con el nombre y precio de ese momento, y de qué depósito salió cada unidad.</td></tr>
   <tr><td><code>chat_messages</code></td><td>Los mensajes de cada conversación, incluidos los resultados de las herramientas.</td></tr>
 </table>
-<p>Al dataset le agregamos una sola cosa. Las imágenes que trae son de relleno, entonces a cada uno de los 360 productos le pusimos una foto distinta de un producto real parecido, sacada de una búsqueda de imágenes con su descripción. En <code>public/products/CREDITOS.md</code> está de dónde salió cada una y un test controla que no haya dos iguales.</p>
 </section>
 
 <!-- ============================================================ -->
@@ -414,7 +413,7 @@ erDiagram
 <h2>10. Testing</h2>
 <table>
   <tr><th style="width:18%">Nivel</th><th>Qué prueba</th><th style="width:16%">Resultado</th></tr>
-  <tr><td>Unitarios (Vitest)</td><td>Cálculos de plata, umbrales de stock, validación de cantidades y del checkout, reparto entre depósitos, el lector del Excel, reintentos y modelo de respaldo, la búsqueda estructurada con un modelo simulado (objeto válido, objeto fuera del schema y modelo colgado), que no haya fotos repetidas, errores de la API, conversión a WAV y otros detalles chicos.</td><td>63 de 63</td></tr>
+  <tr><td>Unitarios (Vitest)</td><td>Cálculos de plata, umbrales de stock, validación de cantidades y del checkout, reparto entre depósitos, el lector del Excel, reintentos y modelo de respaldo, la búsqueda estructurada con un modelo simulado (objeto válido, objeto fuera del schema y modelo colgado), errores de la API, conversión a WAV y otros detalles chicos.</td><td>59 de 59</td></tr>
   <tr><td>Integración (Vitest y PostgreSQL)</td><td>Importación del dataset, catálogo, búsqueda, carrito, compra (con concurrencia, doble confirmación, cambio de precio y retiro sin stock), historial, las diez herramientas, el agente con un modelo simulado y la transcripción.</td><td>72 de 72</td></tr>
   <tr><td>E2E (Playwright)</td><td>Una compra entera sobre el build de producción que al final controla que bajó el stock, el intento de pasarse del stock, un producto discontinuado y el asistente sin API key.</td><td>4 de 4</td></tr>
   <tr><td>Evals (Gemini real)</td><td>Siete conversaciones. Recomendación con presupuesto, pedido vago, producto que no existe, producto sin stock, comparación en dos mensajes, pedido de compra directa y pregunta que no tiene nada que ver. Aparte, seis búsquedas del catálogo para controlar el objeto estructurado.</td><td>7 de 7 y 6 de 6</td></tr>
@@ -422,8 +421,8 @@ erDiagram
 <p>Los de integración y E2E corren contra una base aparte que se carga con el dataset completo antes de empezar. Al modelo lo simulamos únicamente en los tests del agente, para poder probar cosas como que esté saturado o no conteste.</p>
 <p>Varios de los arreglos que hicimos salieron de estos tests. El E2E nos mostró que, después del error de stock, el campo de cantidad se quedaba con el número inválido. Un test de integración encontró lo del doble click que contamos en 6.3. Y con los evals apareció lo del mouse más barato (6.2).</p>
 <pre>$ npm run check            # typecheck + lint + unitarios
- Test Files  15 passed (15)
-      Tests  63 passed (63)
+ Test Files  14 passed (14)
+      Tests  59 passed (59)
 
 $ npm run test:integration
  Test Files  9 passed (9)
@@ -474,7 +473,7 @@ docker compose up --build</pre>
 <h2>13. Limitaciones y trabajo futuro</h2>
 <p>Lo que más limita es la cuota gratuita de Gemini. Con dos o tres personas usando el asistente a la vez ya empiezan los reintentos. Para algo real habría que pasar a un plan pago y guardar en caché las consultas que se repiten.</p>
 <p>La búsqueda semántica siempre devuelve algo, aunque no venga al caso. Cuando el asistente busca algo que la tienda no vende, explica bien que no está, pero arriba aparecen tarjetas que no vienen al caso. Habría que poner un mínimo de parecido o reordenar los resultados con otro modelo.</p>
-<p>Sin cuentas de usuario, el historial depende de la cookie y se pierde al borrarla o al usar otro navegador. Las fichas siguen en inglés porque así vienen en el dataset, y las fotos son de productos reales parecidos y no del producto exacto.</p>
+<p>Sin cuentas de usuario, el historial depende de la cookie y se pierde al borrarla o al usar otro navegador. Las fichas siguen en inglés porque así vienen en el dataset.</p>
 <p>En la última revisión quedaron anotados algunos detalles menores. El servidor lee el audio completo antes de controlar el tamaño máximo, el ícono de micrófono de un mensaje por voz desaparece al recargar, y el aviso de "los precios cambiaron" también aparece cuando lo que cambió fue el carrito desde otra pestaña.</p>
 <p>Para usarlo de verdad faltaría un medio de pago, login, un tablero que junte lo que hoy queda en el log de cada paso del asistente, límites de uso por persona y un panel para cargar productos y stock.</p>
 </section>
@@ -496,7 +495,7 @@ docker compose up --build</pre>
 <p>Según las pautas de la materia, estas son las herramientas de IA que usamos y para qué.</p>
 <table style="break-inside:avoid">
   <tr><th style="width:24%">Herramienta</th><th>Para qué la usamos</th></tr>
-  <tr><td>Claude Code con Claude Opus 5.5 (Anthropic)</td><td>Escribir el código y los tests, armar el diseño y el plan a partir de la letra, revisar el código, hacer la redacción inicial de este documento y del README, y buscar las fotos de los productos.</td></tr>
+  <tr><td>Claude Code con Claude Opus 5.5 (Anthropic)</td><td>Escribir el código y los tests, armar el diseño y el plan a partir de la letra, revisar el código, y hacer la redacción inicial de este documento y del README.</td></tr>
   <tr><td>Google Gemini (plan gratuito)</td><td>Es parte de la aplicación. Lo usan el asistente, la búsqueda semántica y la transcripción de voz.</td></tr>
 </table>
 <p>Revisamos lo que generó la IA con los tests, probándolo en el navegador y leyéndolo, y corregimos este documento antes de entregarlo.</p>

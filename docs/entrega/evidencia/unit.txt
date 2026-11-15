@@ -2,8 +2,8 @@
  RUN  v5.1.0 /Users/pipelussich/mercanova-ai-shopping/.claude/worktrees/main
 
 
- Test Files  15 passed (15)
-      Tests  63 passed (63)
-   Start at  12:10:54
-   Duration  796ms (import 46%, tests 37%, transform 14%, worker 3%)
+ Test Files  14 passed (14)
+      Tests  59 passed (59)
+   Start at  12:39:52
+   Duration  627ms (tests 43%, import 41%, transform 13%, worker 3%)
 
