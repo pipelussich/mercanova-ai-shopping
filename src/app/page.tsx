@@ -7,7 +7,12 @@ import { buttonVariants } from "@/components/ui/button";
 import { requestDb } from "@/server/request-db";
 import { queryEmbedder } from "@/ai/embeddings";
 import { listBrands, listProducts, type ProductFilters } from "@/server/catalog/catalog-service";
-import { searchProducts } from "@/server/search/search-service";
+import { searchProducts, type SearchQuery, type SortBy } from "@/server/search/search-service";
+import { toCatalogFilters, understandQuery } from "@/ai/query-understanding";
+import { Badge } from "@/components/ui/badge";
+import { categoryLabel } from "@/domain/categories";
+import { formatUSD } from "@/domain/money";
+import { hasAI } from "@/env";
 
 type SP = Record<string, string | string[] | undefined>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
@@ -49,18 +54,59 @@ async function Filters() {
   return <CatalogFilters brands={brands} />;
 }
 
-async function SearchResults({ f }: { f: ReturnType<typeof parseFilters> & { q: string } }) {
-  const { items, mode } = await searchProducts(
-    await requestDb(),
-    { ...f, query: f.q, limit: 20 },
-    { embedQuery: queryEmbedder() },
-  );
+/** Etiquetas de lo que el modelo entendió de la búsqueda, para que la persona vea qué filtros se aplicaron. */
+function understoodChips(q: SearchQuery & { sortBy?: SortBy }): string[] {
+  const chips: string[] = [];
+  if (q.category) chips.push(categoryLabel(q.category));
+  if (q.brand) chips.push(q.brand);
+  if (q.minPriceCents != null) chips.push(`desde ${formatUSD(q.minPriceCents)}`);
+  if (q.maxPriceCents != null) chips.push(`hasta ${formatUSD(q.maxPriceCents)}`);
+  if (q.inStockOnly) chips.push("con stock");
+  if (q.sortBy === "price_asc") chips.push("más baratos primero");
+  if (q.sortBy === "price_desc") chips.push("más caros primero");
+  if (q.sortBy === "rating") chips.push("mejor puntuados primero");
+  return chips;
+}
+
+async function SearchResults({ f, literal }: { f: ReturnType<typeof parseFilters> & { q: string }; literal: boolean }) {
+  const db = await requestDb();
+  let query: SearchQuery & { sortBy?: SortBy } = { ...f, query: f.q };
+  let chips: string[] = [];
+  // Structured output: el modelo pasa el texto a filtros. Lo que la persona eligió a mano en los filtros manda.
+  const understood = !literal && hasAI() ? await understandQuery(f.q) : null;
+  if (understood) {
+    const inferred = toCatalogFilters(understood, await listBrands(db));
+    query = {
+      ...inferred,
+      category: f.category ?? inferred.category,
+      brand: f.brand ?? inferred.brand,
+      maxPriceCents: f.maxPriceCents ?? inferred.maxPriceCents,
+      inStockOnly: f.inStockOnly || inferred.inStockOnly,
+      includeInactive: f.includeInactive,
+    };
+    chips = understoodChips(inferred);
+  }
+  const { items, mode } = await searchProducts(db, { ...query, limit: 20 }, { embedQuery: queryEmbedder() });
+  const literalHref = `/?${new URLSearchParams({ q: f.q, literal: "1" }).toString()}`;
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted-foreground">
         {items.length} resultados para «{f.q}»
         {mode === "keyword" && " · búsqueda por palabras clave (la búsqueda inteligente no está disponible ahora)"}
       </p>
+      {chips.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 text-sm" data-testid="understood-filters">
+          <span className="text-muted-foreground">Entendimos</span>
+          {chips.map((c) => (
+            <Badge key={c} variant="secondary">
+              {c}
+            </Badge>
+          ))}
+          <Link href={literalHref} className="text-muted-foreground underline underline-offset-2 hover:text-foreground">
+            buscar el texto tal cual
+          </Link>
+        </div>
+      )}
       {items.length === 0 ? (
         <div className="rounded-lg border bg-background p-10 text-center text-muted-foreground">
           No encontramos productos para esa búsqueda. Probá describirlo de otra forma o preguntale al asistente.
@@ -79,7 +125,7 @@ async function SearchResults({ f }: { f: ReturnType<typeof parseFilters> & { q: 
 async function Results({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
   const f = parseFilters(sp);
-  if (f.q) return <SearchResults f={{ ...f, q: f.q }} />;
+  if (f.q) return <SearchResults f={{ ...f, q: f.q }} literal={one(sp.literal) === "1"} />;
   const { items, total } = await listProducts(await requestDb(), f);
   const pages = Math.max(1, Math.ceil(total / 24));
 

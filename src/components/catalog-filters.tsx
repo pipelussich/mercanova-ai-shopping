@@ -35,7 +35,7 @@ export function CatalogFilters({ brands, showSearch = true }: { brands: string[]
           className="flex gap-2"
           onSubmit={(e) => {
             e.preventDefault();
-            update({ q: query.trim() || null });
+            update({ q: query.trim() || null, literal: null });
           }}
         >
           <div className="relative flex-1">

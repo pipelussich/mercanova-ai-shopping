@@ -49,7 +49,29 @@ function timeoutError(message: string) {
   return Object.assign(new Error(message), { name: "TimeoutError" });
 }
 
-const CONTENT_PARTS = new Set(["text-delta", "tool-call", "tool-input-start", "reasoning-delta", "finish"]);
+/** Una línea por paso del agente en el log del servidor: qué modelo, qué tools y cuántos tokens. Sin texto del usuario. */
+function logStep(step: {
+  stepNumber: number;
+  model: { modelId: string };
+  toolCalls: { toolName: string }[];
+  finishReason: string;
+  usage: { inputTokens?: number; outputTokens?: number };
+}) {
+  if (process.env.NODE_ENV === "test") return;
+  console.info(
+    JSON.stringify({
+      event: "assistant_step",
+      step: step.stepNumber,
+      model: step.model.modelId,
+      tools: step.toolCalls.map((c) => c.toolName),
+      finish: step.finishReason,
+      inputTokens: step.usage.inputTokens,
+      outputTokens: step.usage.outputTokens,
+    }),
+  );
+}
+
+const CONTENT_PARTS =new Set(["text-delta", "tool-call", "tool-input-start", "reasoning-delta", "finish"]);
 
 /**
  * Agente único con tools (sin multi-agent): decide en hasta MAX_AGENT_STEPS pasos qué capacidades reales de la app
@@ -83,6 +105,7 @@ export function createAgentStream(opts: AgentStreamOptions): ReadableStream {
             providerOptions: GOOGLE_PROVIDER_OPTIONS,
             maxRetries: opts.maxRetries ?? 2,
             onError: () => {}, // los errores se manejan abajo / en onError del stream de UI
+            onStepFinish: logStep,
           });
           // Se crea el stream de UI antes de leer: cada consumidor recibe su propia copia del stream.
           const ui = result.toUIMessageStream({ sendStart: false, onError: friendlyAIError });
