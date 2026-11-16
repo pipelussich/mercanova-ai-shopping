@@ -47,9 +47,10 @@ export function catalogTools(ctx: ToolContext) {
         "Returns at most 6 active products with CURRENT price (USD) and stock from the database. " +
         "Use it whenever the user describes a need. Write `query` in English describing the use case and key features " +
         "(e.g. 'comfortable headphones for remote work and video calls with good microphone'). " +
-        "Put budgets in maxPriceUsd instead of the query.",
+        "Put budgets in maxPriceUsd instead of the query. " +
+        "Omit `query` when the user only wants a category sorted (e.g. 'the cheapest keyboard': category + sortBy).",
       inputSchema: z.object({
-        query: z.string().min(2).describe("What the user needs, in English"),
+        query: z.string().optional().describe("What the user needs, in English. Optional"),
         category: category.optional().describe("Restrict to one catalog category when it is clear"),
         maxPriceUsd: z.number().positive().optional(),
         minPriceUsd: z.number().nonnegative().optional(),
@@ -66,7 +67,7 @@ export function catalogTools(ctx: ToolContext) {
         const { items, mode } = await searchProducts(
           ctx.db,
           {
-            query: input.query,
+            query: input.query ?? "",
             category: input.category,
             brand: input.brand,
             maxPriceCents: input.maxPriceUsd != null ? Math.round(input.maxPriceUsd * 100) : undefined,

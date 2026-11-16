@@ -64,6 +64,17 @@ describe("tools del asistente", () => {
     expect(r.sortBy).toBe("price_asc");
   });
 
+  it("search_products acepta un pedido sin query (\"el teclado más barato\") y ordena por precio", async () => {
+    const input = { category: "Keyboards", sortBy: "price_asc" };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- el schema que valida lo que manda el modelo
+    expect((tools.search_products.inputSchema as any).safeParse(input).success).toBe(true);
+    const r = await run("search_products", input);
+    expect(r.results.length).toBeGreaterThan(0);
+    expect(r.results.every((p: { category: string }) => p.category === "Keyboards")).toBe(true);
+    const prices = r.results.map((p: { priceUsd: number }) => p.priceUsd);
+    expect(prices).toEqual([...prices].sort((a: number, b: number) => a - b));
+  });
+
   it("search_products avisa cuando no hay resultados", async () => {
     const r = await run("search_products", { query: "zzzqqq" });
     expect(r).toMatchObject({ results: [], note: "NO_RESULTS" });

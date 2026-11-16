@@ -129,8 +129,11 @@ export function ToolResult({ part }: { part: ToolPart }) {
         <Loader2 className="size-3 animate-spin" /> {TOOL_STATUS_ES[name] ?? "Procesando…"}
       </p>
     );
-  if (part.state === "output-error")
+  if (part.state === "output-error") {
+    // Argumentos mal armados por el modelo: el SDK se los devuelve y el agente reintenta solo, no es un error para la persona.
+    if (part.errorText?.startsWith("Invalid input for tool")) return null;
     return <p className="text-xs text-destructive">No pude completar una consulta ({TOOL_STATUS_ES[name] ?? name}).</p>;
+  }
   if (part.state !== "output-available") return null;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- outputs tipados por tool en el servidor

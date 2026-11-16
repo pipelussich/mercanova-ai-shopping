@@ -37,7 +37,7 @@ export type SearchResult = ProductSummary & {
   keyFeatures: string[];
 };
 
-export type SearchResponse = { items: SearchResult[]; mode: "semantic" | "keyword" };
+export type SearchResponse = { items: SearchResult[]; mode: "semantic" | "keyword" | "filters" };
 
 type Row = SummaryRow & {
   score: string | number;
@@ -78,6 +78,17 @@ export async function searchProducts(
     sort
       ? db.execute<Row>(sql`select * from (${inner} limit ${CANDIDATES}) c order by ${sort} limit ${limit}`)
       : db.execute<Row>(sql`${inner} limit ${limit}`);
+
+  // Sin descripción de la necesidad ("el teclado más barato") no hay nada que comparar: sólo filtros y orden.
+  if (!q.query.trim()) {
+    const rows = await db.execute<Row>(sql`
+      select * from (
+        select ${SUMMARY_COLUMNS}, 0 as total, ${EXTRA}, 0 as score
+        from products p join prices pr on pr.product_id = p.id
+        ${where(filters)}
+      ) c order by ${sort ?? sortSql("rating")} limit ${limit}`);
+    return { items: rows.map((r) => toResult(q.query, r)), mode: "filters" };
+  }
 
   let vector: number[] | null = null;
   try {

@@ -78,6 +78,25 @@ describe("searchProducts (semántica)", () => {
     expect(r.items[0].priceCents).toBe(Math.round(Number(min) * 100));
   });
 
+  it("sin consulta lista por filtros en el orden pedido y no calcula embeddings", async () => {
+    const neverEmbed = async (): Promise<number[]> => {
+      throw new Error("no debería calcular el embedding de una consulta vacía");
+    };
+    const r = await searchProducts(
+      db,
+      { query: "", category: "Keyboards", sortBy: "price_asc", limit: 5 },
+      { embedQuery: neverEmbed },
+    );
+    expect(r.items.length).toBe(5);
+    expect(r.items.every((p) => p.category === "Keyboards")).toBe(true);
+    const prices = r.items.map((p) => p.priceCents);
+    expect(prices).toEqual([...prices].sort((a, b) => a - b));
+    const [{ min }] = await db.execute<{ min: string }>(sql`
+      select min(pr.current_price) as min from products p join prices pr on pr.product_id = p.id
+      where p.category = 'Keyboards' and p.active`);
+    expect(r.items[0].priceCents).toBe(Math.round(Number(min) * 100));
+  });
+
   it("ordena por rating", async () => {
     const r = await searchProducts(
       db,
