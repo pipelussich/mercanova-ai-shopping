@@ -3,10 +3,10 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useEffect, useRef, useState } from "react";
-import { Bot, Loader2, Mic, RotateCcw, SendHorizonal, Sparkles } from "lucide-react";
+import { Bot, Loader2, Mic, RotateCcw, SendHorizonal, Sparkles, X } from "lucide-react";
 import { notifyCartChanged } from "@/components/cart/cart-context";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { RichText } from "./rich-text";
 import { ToolResult } from "./tool-result-cards";
@@ -90,14 +90,27 @@ export function AssistantPanel() {
         <Sparkles /> Asistente
       </Button>
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-lg">
-          <SheetHeader className="flex-row items-center gap-2 border-b pr-12">
-            <SheetTitle className="flex items-center gap-2 whitespace-nowrap">
-              <Bot className="size-5" /> Asistente de compras
+        <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-lg" showCloseButton={false}>
+          {/* La cruz va en el mismo renglón que el resto para que nunca se superponga con "Nueva conversación". */}
+          <SheetHeader className="flex-row items-center gap-2 border-b">
+            <SheetTitle className="flex min-w-0 items-center gap-2">
+              <Bot className="size-5 shrink-0" /> <span className="truncate">Asistente de compras</span>
             </SheetTitle>
-            <Button variant="ghost" size="sm" className="mr-6 ml-auto" onClick={reset} disabled={messages.length === 0}>
-              <RotateCcw /> Nueva conversación
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-auto shrink-0"
+              onClick={reset}
+              disabled={messages.length === 0}
+              aria-label="Nueva conversación"
+            >
+              <RotateCcw /> <span className="hidden min-[400px]:inline">Nuevo chat</span>
             </Button>
+            <SheetClose
+              render={<Button variant="ghost" size="icon-sm" className="shrink-0" aria-label="Cerrar asistente" />}
+            >
+              <X />
+            </SheetClose>
           </SheetHeader>
 
           <div className="flex-1 overflow-y-auto px-4 py-4" aria-live="polite">
