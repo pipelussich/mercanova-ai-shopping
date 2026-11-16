@@ -446,13 +446,13 @@ $ npm run evals            # Gemini real
   <tr><td><code>code-review</code></td><td>Lista de cosas a revisar en un cambio contra la letra y las reglas del proyecto, con los hallazgos ordenados por gravedad.</td></tr>
   <tr><td><code>assistant-evals</code></td><td>Cómo agregar un eval, cómo correrlos sin pasarse de la cuota y qué mirar cuando el asistente dice algo que no debería.</td></tr>
 </tbody></table>
-<p>Para aceptar cada tarea, además de que pasaran el typecheck, el lint y los tests, revisábamos el código y lo probábamos. En algunos casos rompimos el código a propósito para ver si el test lo detectaba. Las decisiones que fueron apareciendo en el camino, como reemplazar exceljs o cambiar el orden de los modelos de voz, están anotadas en <code>docs/registro-de-implementacion.md</code>. Los dos integrantes recorrimos el código y las decisiones para poder explicarlos en la defensa.</p>
+<p>Para aceptar cada tarea, además de que pasaran el typecheck, el lint y los tests, revisábamos el código y lo probábamos. Las decisiones que fueron apareciendo en el camino, como reemplazar exceljs o cambiar el orden de los modelos de voz, están anotadas en <code>docs/registro-de-implementacion.md</code>. Los dos integrantes recorrimos el código y las decisiones para poder explicarlos en la defensa.</p>
 </section>
 
 <!-- ============================================================ -->
 <section>
 <h2>12. Ejecución local</h2>
-<p>Hace falta Docker con Docker Compose v2 (Docker Desktop, OrbStack o colima) y una API key gratuita de Gemini, que se saca en <code>aistudio.google.com/apikey</code> sin poner tarjeta.</p>
+<p>Hace falta Docker con Docker Compose v2 (Docker Desktop, OrbStack o colima) y una API key gratuita de Gemini, que se saca en <code>aistudio.google.com/apikey</code>.</p>
 <pre>git clone https://github.com/pipelussich/mercanova-ai-shopping.git
 cd mercanova-ai-shopping
 cp .env.example .env        # completar GEMINI_API_KEY
@@ -478,7 +478,6 @@ docker compose up --build</pre>
   <tr><td>Repositorio</td><td>https://github.com/pipelussich/mercanova-ai-shopping (rama <code>main</code>)</td></tr>
   <tr><td>Video de demostración</td><td>https://youtu.be/lhm0E5bVnbQ</td></tr>
 </tbody></table>
-<p style="text-align:left">En el repositorio también están el diseño (<code>docs/superpowers/specs/</code>), el plan (<code>docs/superpowers/plans/</code>), el registro de decisiones (<code>docs/registro-de-implementacion.md</code>) y el checklist de la entrega (<code>docs/checklist-entrega.md</code>).</p>
 </section>
 
 <!-- ============================================================ -->
@@ -490,7 +489,6 @@ docker compose up --build</pre>
   <tr><td>Claude Code con Claude Opus 5.5 (Anthropic)</td><td>Escribir el código y los tests, armar el diseño y el plan a partir de la letra, revisar el código, y hacer la redacción inicial de este documento y del README.</td></tr>
   <tr><td>Google Gemini (plan gratuito)</td><td>Es parte de la aplicación. Lo usan el asistente, la búsqueda semántica y la transcripción de voz.</td></tr>
 </tbody></table>
-<p>Revisamos lo que generó la IA con los tests, probándolo en el navegador y leyéndolo, y corregimos este documento antes de entregarlo.</p>
 </section>
 
 <script>
