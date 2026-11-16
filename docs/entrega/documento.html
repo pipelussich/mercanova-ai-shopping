@@ -38,34 +38,27 @@
   .decision p { margin-bottom: 1.5mm; }
   .decision b { color: var(--accent); }
   .page-break { break-before: page; }
-  .cover { height: 255mm; display: flex; flex-direction: column; justify-content: space-between; }
-  .cover .top { margin-top: 30mm; }
-  .cover .title { font-size: 30pt; color: var(--accent); font-weight: 700; margin: 0; }
-  .cover .subtitle { font-size: 15pt; color: var(--muted); margin: 3mm 0 0; }
-  .cover table { width: auto; font-size: 11pt; }
-  .cover td { border: none; padding: 1mm 6mm 1mm 0; }
+  .cover { height: 255mm; display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .cover p { text-align: center; }
+  .cover .logo { width: 95mm; margin-top: 12mm; border: none; }
+  .cover .faculty { font-size: 26pt; font-weight: 700; margin: 14mm 0 0; }
+  .cover .course { font-size: 17pt; margin: 12mm 0 0; line-height: 1.35; }
+  .cover .project { font-size: 13pt; color: var(--muted); margin: 6mm 0 0; }
+  .cover .members { font-size: 15pt; margin: auto 0 0; line-height: 1.5; }
+  .cover .meta { font-size: 9.5pt; color: var(--muted); margin: 10mm 0 0; line-height: 1.6; }
   .toc ol { columns: 2; column-gap: 10mm; }
   .note { background: var(--soft); border-radius: 2mm; padding: 3mm 4mm; margin: 3mm 0 4mm; font-size: 9.5pt; }
-  .pending { background: #fff4d6; padding: 0 1mm; }
 </style>
 </head>
 <body>
 
 <section class="cover">
-  <div class="top">
-    <p style="color:var(--muted);margin:0">Universidad ORT Uruguay · Facultad de Ingeniería</p>
-    <p class="title">MercaNova</p>
-    <p class="subtitle">AI Shopping Assistant. Documento técnico del obligatorio</p>
-  </div>
-  <table>
-    <tbody><tr><td><b>Materia</b></td><td>Sistemas de Soporte de Decisión</td></tr>
-    <tr><td><b>Carrera</b></td><td>Licenciatura en Sistemas</td></tr>
-    <tr><td><b>Grupo</b></td><td>N8B</td></tr>
-    <tr><td><b>Integrantes</b></td><td>Felipe Lussich (280738)<br>Mateo Falco (283972)</td></tr>
-    <tr><td><b>Fecha</b></td><td>Diciembre de 2026</td></tr>
-    <tr><td><b>Repositorio</b></td><td>https://github.com/pipelussich/mercanova-ai-shopping</td></tr>
-    <tr><td><b>Video</b></td><td><span class="pending">link al video (a completar)</span></td></tr>
-  </tbody></table>
+  <img class="logo" src="img/logo-ort.png" alt="Universidad ORT Uruguay" />
+  <p class="faculty">Facultad de Ingeniería</p>
+  <p class="course">Sistemas de Soporte de Decisión<br>Obligatorio</p>
+  <p class="project">MercaNova · AI Shopping Assistant</p>
+  <p class="members">Mateo Falco - 283972<br>Felipe Lussich - 280738</p>
+  <p class="meta">Licenciatura en Sistemas · Grupo N8B · Diciembre de 2026<br>Repositorio: https://github.com/pipelussich/mercanova-ai-shopping<br>Video: https://youtu.be/lhm0E5bVnbQ</p>
 </section>
 
 <section class="page-break toc">
@@ -101,7 +94,7 @@
 <!-- ============================================================ -->
 <section>
 <h2>2. Requerimientos implementados</h2>
-<p>Implementamos los 18 requerimientos funcionales y los 7 no funcionales. En la tabla está cómo resolvimos cada uno y dónde se puede ver.</p>
+<p>Implementamos los 18 requerimientos funcionales y los 7 no funcionales.</p>
 <table>
   <tbody><tr><th style="width:17%">Requerimiento</th><th>Cómo lo resolvimos</th><th style="width:22%">Dónde verlo</th></tr>
   <tr><td>RF-01 Catálogo</td><td>Listado paginado con filtros por categoría, marca, precio máximo, solo con stock y discontinuados. Cada producto tiene su ficha con especificaciones, stock por depósito y productos relacionados.</td><td><code>catalog.test.ts</code>, figuras 1 y 3</td></tr>
@@ -124,7 +117,7 @@
   <tr><td>RF-18 No invención</td><td>Los datos salen de las herramientas, y los evals controlan que los montos que nombra el asistente existan en la base.</td><td>sección 4 y evals</td></tr>
   <tr><td>RNF-01 a RNF-07</td><td>Docker Compose con la base y la app, variables en <code>.env</code> con su <code>.env.example</code>, tests en cuatro niveles, código ordenado en capas, y una prueba de levantado desde un clone limpio.</td><td>secciones 10 y 12</td></tr>
 </tbody></table>
-<p>No hay login, que la letra deja fuera de alcance. A cada visitante lo identificamos con una cookie de sesión anónima. La voz sirve para hacer consultas y el asistente siempre contesta por escrito.</p>
+<p>No hay login, a cada visitante lo identificamos con una cookie de sesión anónima. La voz sirve para hacer consultas y el asistente siempre contesta por escrito.</p>
 </section>
 
 <!-- ============================================================ -->
@@ -148,7 +141,7 @@ flowchart LR
 <p style="text-align:center;font-size:8.5pt;color:var(--muted)">Figura A. Componentes de la solución y sus dependencias.</p>
 <p>Adentro el código está separado en carpetas por capa.</p>
 <table>
-  <tbody><tr><th style="width:22%">Componente</th><th>Qué hace</th></tr>
+  <tbody><tr><th style="width:22%">Componente</th><th>Utilidad</th></tr>
   <tr><td><code>src/domain</code></td><td>Las reglas de negocio sin base de datos de por medio. Cálculos de plata en centavos, umbrales de stock, validación de cantidades y del checkout, y el reparto de unidades entre depósitos.</td></tr>
   <tr><td><code>src/server</code></td><td>Servicios que trabajan con PostgreSQL a través de Drizzle. Catálogo, búsqueda, carrito, órdenes, historial del chat e importación del dataset.</td></tr>
   <tr><td><code>src/ai</code></td><td>Todo lo que habla con Gemini. Reintentos y modelo de respaldo, embeddings, transcripción, la lectura de la búsqueda del catálogo, las herramientas del agente, el prompt y el agente.</td></tr>
@@ -483,7 +476,7 @@ docker compose up --build</pre>
 <table>
   <tbody><tr><th style="width:22%">Recurso</th><th>Link</th></tr>
   <tr><td>Repositorio</td><td>https://github.com/pipelussich/mercanova-ai-shopping (rama <code>main</code>)</td></tr>
-  <tr><td>Video de demostración</td><td><span class="pending">link a completar</span></td></tr>
+  <tr><td>Video de demostración</td><td>https://youtu.be/lhm0E5bVnbQ</td></tr>
 </tbody></table>
 <p style="text-align:left">En el repositorio también están el diseño (<code>docs/superpowers/specs/</code>), el plan (<code>docs/superpowers/plans/</code>), el registro de decisiones (<code>docs/registro-de-implementacion.md</code>) y el checklist de la entrega (<code>docs/checklist-entrega.md</code>).</p>
 </section>
